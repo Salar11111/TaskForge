@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.task.deleteMany();
   await prisma.project.deleteMany();
-  await prisma.member.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.workspaceMember.deleteMany();
   await prisma.workspace.deleteMany();
 
@@ -19,7 +19,7 @@ async function main() {
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'TaskForge-2026!';
   const adminUser =
     (await prisma.user.findUnique({ where: { email: adminEmail } })) ??
-    (await prisma.user.create({ data: { name: 'TaskForge Admin', email: adminEmail, emailVerified: false } }));
+    (await prisma.user.create({ data: { name: 'TaskForge Admin', email: adminEmail, emailVerified: false, color: 'emerald' } }));
   const adminAccount = await prisma.account.findUnique({
     where: { providerId_accountId: { providerId: 'credential', accountId: adminUser.id } },
   });
@@ -39,57 +39,27 @@ async function main() {
     update: { role: 'OWNER' },
   });
 
-  const members = await Promise.all([
-    prisma.member.create({
-      data: {
-        name: 'Alex Chen',
-        email: 'alex@taskforge.app',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-        color: 'emerald',
-        workspaceId: workspace.id,
-      },
+  const members = await Promise.all(
+    [
+      { name: 'Alex Chen', email: 'alex@taskforge.app', color: 'emerald', seed: 'alex' },
+      { name: 'Sam Rivera', email: 'sam@taskforge.app', color: 'violet', seed: 'sam' },
+      { name: 'Jordan Kim', email: 'jordan@taskforge.app', color: 'amber', seed: 'jordan' },
+      { name: 'Taylor Brooks', email: 'taylor@taskforge.app', color: 'rose', seed: 'taylor' },
+      { name: 'Morgan Lee', email: 'morgan@taskforge.app', color: 'cyan', seed: 'morgan' },
+    ].map(async (m) => {
+      const user = await prisma.user.create({
+        data: {
+          name: m.name,
+          email: m.email,
+          color: m.color,
+          image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.seed}`,
+        },
+      });
+      await prisma.workspaceMember.create({
+        data: { userId: user.id, workspaceId: workspace.id, role: 'MEMBER' },
+      });
+      return user;
     }),
-    prisma.member.create({
-      data: {
-        name: 'Sam Rivera',
-        email: 'sam@taskforge.app',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sam',
-        color: 'violet',
-        workspaceId: workspace.id,
-      },
-    }),
-    prisma.member.create({
-      data: {
-        name: 'Jordan Kim',
-        email: 'jordan@taskforge.app',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jordan',
-        color: 'amber',
-        workspaceId: workspace.id,
-      },
-    }),
-    prisma.member.create({
-      data: {
-        name: 'Taylor Brooks',
-        email: 'taylor@taskforge.app',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=taylor',
-        color: 'rose',
-        workspaceId: workspace.id,
-      },
-    }),
-    prisma.member.create({
-      data: {
-        name: 'Morgan Lee',
-        email: 'morgan@taskforge.app',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=morgan',
-        color: 'cyan',
-        workspaceId: workspace.id,
-      },
-    }),
-  ]);
-
-  // Backfill: any legacy member without a workspace joins the oldest one.
-  await prisma.$executeRawUnsafe(
-    `UPDATE Member SET workspaceId = (SELECT id FROM Workspace ORDER BY createdAt LIMIT 1) WHERE workspaceId IS NULL`
   );
 
   const projects = await Promise.all([
