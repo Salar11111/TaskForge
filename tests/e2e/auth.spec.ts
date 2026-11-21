@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('anonymous API access is denied', async ({ request }) => {
   expect((await request.get('/api/projects')).status()).toBe(401);
   expect((await request.get('/api/tasks')).status()).toBe(401);
-  expect((await request.get('/api/members')).status()).toBe(401);
+  expect((await request.get('/api/users')).status()).toBe(401);
   expect((await request.get('/api/stats')).status()).toBe(401);
 });
 
