@@ -13,11 +13,25 @@ import { getColorTokens, getStatusColor, getPriorityColor } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, Clock, AlertCircle, ListTodo } from 'lucide-react';
 
+/**
+ * Trend of `current` vs `previous`, as a percentage. Returns null when there is
+ * no meaningful previous value. `improvement=true` flips the sign (for metrics
+ * where down is better, like overdue).
+ */
+function trendPercent(current: number, previous: number, improvement: boolean): number | null {
+  if (!previous) return null;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  return improvement ? pct : -pct;
+}
+
 export function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: statsApi.get,
   });
+
+  const completedTrend = trendPercent(stats?.statusBreakdown?.DONE || 0, stats?.lastWeek?.completed ?? 0, true);
+  const overdueTrend = trendPercent(stats?.overdueCount || 0, stats?.lastWeek?.overdue ?? 0, false);
 
   if (isLoading) {
     return (
@@ -54,9 +68,9 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Tasks" value={stats.totalTasks || 0} description="All tasks across projects" icon={ListTodo} color="slate" />
-        <StatCard title="Completed" value={stats.statusBreakdown?.DONE || 0} description="Tasks marked as done" icon={CheckCircle2} color="emerald" trend={{ value: 12, label: 'vs last week' }} />
+        <StatCard title="Completed" value={stats.statusBreakdown?.DONE || 0} description="Tasks marked as done" icon={CheckCircle2} color="emerald" trend={completedTrend !== null ? { value: completedTrend, label: 'vs last week' } : undefined} />
         <StatCard title="In Progress" value={stats.statusBreakdown?.IN_PROGRESS || 0} description="Currently being worked on" icon={Clock} color="amber" />
-        <StatCard title="Overdue" value={stats.overdueCount || 0} description="Past due date" icon={AlertCircle} color="rose" trend={{ value: -5, label: 'vs last week' }} />
+        <StatCard title="Overdue" value={stats.overdueCount || 0} description="Past due date" icon={AlertCircle} color="rose" trend={overdueTrend !== null ? { value: overdueTrend, label: 'vs last week' } : undefined} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

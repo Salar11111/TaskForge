@@ -19,8 +19,14 @@ export async function GET(request: NextRequest) {
   try {
     const ctx = await requireWorkspace(request);
     const today = startOfDay(new Date());
+    const weekAgo = addDays(today, -7);
+    const twoWeeksAgo = addDays(today, -14);
     const where = { project: { workspaceId: ctx.workspace.id } };
-    const [totalTasks, statusBreakdown, priorityBreakdown, projects, overdueTasks, upcomingTasks] = await Promise.all([
+    // "Last week" buckets, used to compute the dashboard trends.
+    const [
+      totalTasks, statusBreakdown, priorityBreakdown, projects, overdueTasks, upcomingTasks,
+      lastWeekCompleted, lastWeekOverdue,
+    ] = await Promise.all([
       prisma.task.count({ where }),
       prisma.task.groupBy({ by: ['status'], where, _count: { status: true } }),
       prisma.task.groupBy({ by: ['priority'], where, _count: { priority: true } }),
@@ -49,6 +55,12 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { dueDate: 'asc' },
         take: 10,
+      }),
+      prisma.task.count({
+        where: { ...where, status: 'DONE', updatedAt: { gt: twoWeeksAgo, lte: weekAgo } },
+      }),
+      prisma.task.count({
+        where: { ...where, dueDate: { lt: weekAgo, gt: twoWeeksAgo }, status: { not: 'DONE' } },
       }),
     ]);
 
@@ -82,6 +94,7 @@ export async function GET(request: NextRequest) {
       priorityBreakdown: priorityMap,
       projectProgress,
       overdueCount: overdueTasks,
+      lastWeek: { completed: lastWeekCompleted, overdue: lastWeekOverdue },
       upcomingDeadlines: upcomingTasks.map((task) => ({
         id: task.id,
         title: task.title,

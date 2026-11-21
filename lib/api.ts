@@ -61,6 +61,8 @@ export interface Stats {
   priorityBreakdown: Record<Priority, number>;
   projectProgress: ProjectProgress[];
   overdueCount: number;
+  /** Previous-week buckets used to compute dashboard trends. */
+  lastWeek: { completed: number; overdue: number };
   upcomingDeadlines: TaskWithProjectName[];
 }
 
