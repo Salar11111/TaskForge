@@ -127,7 +127,7 @@ export function ProjectsView() {
         <Card className="animate-in fade-in-0 zoom-in-95 duration-200">
           <CardContent className='py-12 text-center'>
             <Folder className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
-            <h3 className='text-lg font-semibold tracking-tight mb-1'>No projects found</h3>
+            <h2 className='text-lg font-semibold tracking-tight mb-1'>No projects found</h2>
             <p className='text-sm text-muted-foreground mb-4'>{searchQuery || filter !== 'all' ? 'Try adjusting your filters' : 'Create your first project to get started'}</p>
             <Button onClick={() => setProjectDialogOpen(true)}>
               <Plus className='h-4 w-4 mr-2' /> Create Project
@@ -146,7 +146,7 @@ export function ProjectsView() {
                 <div className='p-5'>
                   <div className='flex items-start justify-between gap-2 mb-3'>
                     <div className='min-w-0'>
-                      <h3 className='text-base font-semibold tracking-tight truncate'>{project.name}</h3>
+                      <h2 className='text-base font-semibold tracking-tight truncate'>{project.name}</h2>
                       {project.description && <p className='text-sm text-muted-foreground mt-1 line-clamp-2'>{project.description}</p>}
                     </div>
                     <DropdownMenu>

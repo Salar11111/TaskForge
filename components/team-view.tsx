@@ -102,7 +102,7 @@ export function TeamView() {
                     <div className='flex items-center gap-3 min-w-0'>
                       <MemberAvatar name={member.name} avatar={member.avatar} color={member.color} size='lg' />
                       <div className='min-w-0'>
-                        <h3 className='text-base font-semibold tracking-tight truncate'>{member.name}</h3>
+                        <h2 className='text-base font-semibold tracking-tight truncate'>{member.name}</h2>
                         <p className='text-xs text-muted-foreground truncate'>{member.email}</p>
                       </div>
                     </div>

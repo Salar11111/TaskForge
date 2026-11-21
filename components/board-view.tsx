@@ -121,7 +121,7 @@ function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, isOver }: 
       <div className='flex items-center justify-between p-3 border-b border-border/50'>
         <div className='flex items-center gap-2'>
           <span className={cn('h-2 w-2 rounded-full', tokens.dot)} />
-          <h3 className='font-semibold text-sm tracking-tight'>{STATUS_LABELS[status]}</h3>
+          <h2 className='font-semibold text-sm tracking-tight'>{STATUS_LABELS[status]}</h2>
           <span className='inline-flex items-center justify-center rounded-full bg-muted px-1.5 min-w-[1.25rem] h-5 text-[0.65rem] font-medium text-muted-foreground tabular-nums'>{tasks.length}</span>
         </div>
         <Button variant='ghost' size='icon' className='h-7 w-7' onClick={onAddTask}>

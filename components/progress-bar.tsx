@@ -34,6 +34,7 @@ export function ProgressBar({ value, max = 100, color = 'emerald', showLabel = f
       )}
       <Progress
         value={percentage}
+        aria-label={label ? `${label} (${Math.round(percentage)}%)` : `Progress (${Math.round(percentage)}%)`}
         className={cn(sizeClasses[size])}
         indicatorClassName={tokens.bar}
       />
