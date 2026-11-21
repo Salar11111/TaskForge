@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -77,7 +78,7 @@ export default function LoginForm() {
           </Button>
         </form>
         <p className="mt-4 text-sm text-muted-foreground">
-          New here? Ask a workspace admin to add you, then sign in.
+          New here? <Link href="/signup" className="text-foreground underline underline-offset-2">Create an account</Link>
         </p>
       </CardContent>
     </Card>
