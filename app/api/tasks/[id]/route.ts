@@ -6,7 +6,7 @@ import { apiErrorResponse } from '@/lib/api-error';
 
 const taskIncludes = {
   assignee: {
-    select: { id: true, name: true, avatar: true, color: true },
+    select: { id: true, name: true, image: true, color: true },
   },
   project: {
     select: { id: true, name: true, color: true },
@@ -51,10 +51,10 @@ export async function PATCH(
     };
 
     if (validated.assigneeId) {
-      const member = await prisma.member.findUnique({
-        where: { id: validated.assigneeId },
+      const membership = await prisma.workspaceMember.findFirst({
+        where: { userId: validated.assigneeId, workspaceId: ctx.workspace.id },
       });
-      if (!member || member.workspaceId !== ctx.workspace.id) {
+      if (!membership) {
         throw new WorkspaceError(400, 'Assignee is not a member of this workspace');
       }
     }

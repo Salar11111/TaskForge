@@ -23,9 +23,9 @@ interface AppState {
   projectDialogEditingId: string | null;
   setProjectDialogOpen: (open: boolean, editingId?: string | null) => void;
 
-  memberDialogOpen: boolean;
-  memberDialogEditingId: string | null;
-  setMemberDialogOpen: (open: boolean, editingId?: string | null) => void;
+  userDialogOpen: boolean;
+  userDialogEditingId: string | null;
+  setUserDialogOpen: (open: boolean, editingId?: string | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -48,9 +48,9 @@ export const useAppStore = create<AppState>()(
       projectDialogEditingId: null,
       setProjectDialogOpen: (open, editingId = null) => set({ projectDialogOpen: open, projectDialogEditingId: editingId }),
 
-      memberDialogOpen: false,
-      memberDialogEditingId: null,
-      setMemberDialogOpen: (open, editingId = null) => set({ memberDialogOpen: open, memberDialogEditingId: editingId }),
+      userDialogOpen: false,
+      userDialogEditingId: null,
+      setUserDialogOpen: (open, editingId = null) => set({ userDialogOpen: open, userDialogEditingId: editingId }),
     }),
     {
       name: 'taskforge-store',

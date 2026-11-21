@@ -38,10 +38,10 @@ export const taskReorderSchema = z.object({
   ),
 });
 
-export const memberSchema = z.object({
+export const userSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   email: z.string().email('Invalid email address'),
-  avatar: z.string().url('Invalid avatar URL').optional().nullable().or(z.literal('')),
+  image: z.string().url('Invalid avatar URL').optional().nullable().or(z.literal('')),
   color: z.enum([
     'emerald',
     'violet',
@@ -59,4 +59,4 @@ export const memberSchema = z.object({
 export type ProjectInput = z.infer<typeof projectSchema>;
 export type TaskInput = z.infer<typeof taskSchema>;
 export type TaskReorderInput = z.infer<typeof taskReorderSchema>;
-export type MemberInput = z.infer<typeof memberSchema>;
+export type UserInput = z.infer<typeof userSchema>;

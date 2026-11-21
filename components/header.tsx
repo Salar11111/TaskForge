@@ -24,7 +24,7 @@ const createLabels = {
 };
 
 export function Header() {
-  const { view, searchQuery, setSearchQuery, setTaskDialogOpen, setProjectDialogOpen, setMemberDialogOpen } = useAppStore();
+  const { view, searchQuery, setSearchQuery, setTaskDialogOpen, setProjectDialogOpen, setUserDialogOpen } = useAppStore();
   const { theme, setTheme } = useTheme();
 
   const config = viewConfig[view];
@@ -66,7 +66,7 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem onClick={() => setProjectDialogOpen(true)}>New Project</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTaskDialogOpen(true)}>New Task</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setMemberDialogOpen(true)}>New Member</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setUserDialogOpen(true)}>New Member</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

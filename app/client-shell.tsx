@@ -6,9 +6,9 @@ import { Dashboard } from '@/components/dashboard';
 import { ProjectsView } from '@/components/projects-view';
 import { BoardView } from '@/components/board-view';
 import { TeamView } from '@/components/team-view';
-import { TaskDialog, ProjectDialog, MemberDialog } from '@/components/dialogs';
+import { TaskDialog, ProjectDialog, UserDialog } from '@/components/dialogs';
 import { CommandPalette } from '@/components/command-palette';
-import { projectApi, memberApi, taskApi } from '@/lib/api';
+import { projectApi, taskApi, userApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
 
 export default function ClientShell() {
@@ -22,14 +22,14 @@ export default function ClientShell() {
     projectDialogOpen,
     projectDialogEditingId,
     setProjectDialogOpen,
-    memberDialogOpen,
-    memberDialogEditingId,
-    setMemberDialogOpen,
+    userDialogOpen,
+    userDialogEditingId,
+    setUserDialogOpen,
   } = useAppStore();
 
   // Data used to resolve dialog defaults (edit state, initial status, etc.)
   const { data: projects } = useQuery({ queryKey: queryKeys.projects.list(true), queryFn: () => projectApi.list(true) });
-  const { data: members } = useQuery({ queryKey: queryKeys.members.list(), queryFn: memberApi.list });
+  const { data: users } = useQuery({ queryKey: queryKeys.users.list(), queryFn: () => userApi.list() });
   const { data: tasks } = useQuery({ queryKey: queryKeys.tasks.all, queryFn: () => taskApi.list() });
 
   const editedTask = taskDialogEditingId ? tasks?.find((t) => t.id === taskDialogEditingId) : undefined;
@@ -45,9 +45,7 @@ export default function ClientShell() {
         dueDate: editedTask.dueDate ?? undefined,
         order: editedTask.order,
       }
-    : taskDialogInitialStatus
-      ? { status: taskDialogInitialStatus, projectId: selectedProjectId ?? undefined }
-      : undefined;
+    : { projectId: selectedProjectId ?? undefined, ...(taskDialogInitialStatus ? { status: taskDialogInitialStatus } : {}) };
 
   const editedProject = projectDialogEditingId ? projects?.find((p) => p.id === projectDialogEditingId) : undefined;
   const projectDialogDefaults = editedProject
@@ -59,14 +57,14 @@ export default function ClientShell() {
       }
     : undefined;
 
-  const editedMember = memberDialogEditingId ? members?.find((m) => m.id === memberDialogEditingId) : undefined;
-  const memberDialogDefaults = editedMember
+  const editedUser = userDialogEditingId ? users?.find((u) => u.id === userDialogEditingId) : undefined;
+  const userDialogDefaults = editedUser
     ? {
-        id: editedMember.id,
-        name: editedMember.name,
-        email: editedMember.email,
-        avatar: editedMember.avatar ?? undefined,
-        color: editedMember.color,
+        id: editedUser.id,
+        name: editedUser.name,
+        email: editedUser.email,
+        image: editedUser.image ?? undefined,
+        color: editedUser.color,
       }
     : undefined;
 
@@ -84,7 +82,7 @@ export default function ClientShell() {
         onClose={() => setTaskDialogOpen(false)}
         defaultValues={taskDialogDefaults}
         projects={projects || []}
-        members={members || []}
+        users={users || []}
       />
 
       <ProjectDialog
@@ -93,10 +91,10 @@ export default function ClientShell() {
         defaultValues={projectDialogDefaults}
       />
 
-      <MemberDialog
-        isOpen={memberDialogOpen}
-        onClose={() => setMemberDialogOpen(false)}
-        defaultValues={memberDialogDefaults}
+      <UserDialog
+        isOpen={userDialogOpen}
+        onClose={() => setUserDialogOpen(false)}
+        defaultValues={userDialogDefaults}
       />
     </>
   );

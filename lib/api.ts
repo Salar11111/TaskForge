@@ -1,5 +1,5 @@
 ﻿import { ColorName } from './colors';
-import { ProjectInput, TaskInput, MemberInput } from './validations';
+import { ProjectInput, TaskInput, UserInput } from './validations';
 
 export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -11,7 +11,20 @@ export interface Project {
   color: ColorName;
   _count?: { tasks: { completed: number; total: number } };
   tasks?: Array<{ status: Status }>;
-  members?: Member[];
+  members?: User[];
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  color: ColorName;
+}
+
+export interface WorkspaceUser extends User {
+  taskCount: number;
+  tasksByPriority: Record<string, number>;
 }
 
 export interface Task {
@@ -25,23 +38,12 @@ export interface Task {
   dueDate: string | null;
   order: number;
   project?: { name: string };
-  assignee?: { name: string; avatar: string | null; color: ColorName };
+  assignee?: { name: string; image: string | null; color: ColorName };
 }
 
 export interface TaskWithProjectName extends Task {
   projectName: string;
   overdue?: boolean;
-}
-
-export interface Member {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string | null;
-  color: ColorName;
-  _count?: { tasks: number };
-  tasksByPriority?: Record<string, number>;
-  tasks?: Task[];
 }
 
 export interface ProjectProgress {
@@ -103,12 +105,12 @@ export const taskApi = {
     request<void>('/tasks/reorder', { method: 'PATCH', body: JSON.stringify({ tasks }) }),
 };
 
-export const memberApi = {
-  list: () => request<Member[]>('/members'),
-  get: (id: string) => request<Member>(`/members/${id}`),
-  create: (data: MemberInput) => request<Member>('/members', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<MemberInput>) => request<Member>(`/members/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  delete: (id: string) => request<void>(`/members/${id}`, { method: 'DELETE' }),
+export const userApi = {
+  list: () => request<WorkspaceUser[]>('/users'),
+  get: (id: string) => request<User>(`/users/${id}`),
+  create: (data: UserInput) => request<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<UserInput>) => request<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => request<void>(`/users/${id}`, { method: 'DELETE' }),
 };
 
 export const statsApi = {

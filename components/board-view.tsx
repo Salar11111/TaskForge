@@ -80,7 +80,7 @@ function TaskCardContent({ task, onEdit, onDelete, overlay }: TaskCardProps) {
           )}
         </div>
         {task.assignee && (
-          <MemberAvatar name={task.assignee.name} avatar={task.assignee.avatar} color={task.assignee.color || 'emerald'} size='sm' />
+          <MemberAvatar name={task.assignee.name} avatar={task.assignee.image} color={task.assignee.color || 'emerald'} size='sm' />
         )}
       </div>
     </Card>

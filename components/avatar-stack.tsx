@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { ColorName } from '@/lib/colors';
 
 interface AvatarStackProps {
-  members: Array<{ id: string; name: string; avatar?: string | null; color: ColorName | string }>;
+  members: Array<{ id: string; name: string; image?: string | null; color: ColorName | string }>;
   max?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
@@ -18,7 +18,7 @@ export function AvatarStack({ members, max = 5, size = 'md', className }: Avatar
   return (
     <div className={cn('flex -space-x-2', className)} aria-label={`${members.length} team members`}>
       {visible.map((member) => (
-        <MemberAvatar key={member.id} name={member.name} avatar={member.avatar} color={member.color} size={size} />
+        <MemberAvatar key={member.id} name={member.name} avatar={member.image} color={member.color} size={size} />
       ))}
       {remaining > 0 && (
         <div

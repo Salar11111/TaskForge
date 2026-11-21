@@ -17,7 +17,7 @@ export async function GET(
         tasks: {
           include: {
             assignee: {
-              select: { id: true, name: true, avatar: true, color: true },
+              select: { id: true, name: true, image: true, color: true },
             },
           },
           orderBy: [{ status: 'asc' }, { order: 'asc' }],

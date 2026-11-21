@@ -1,8 +1,8 @@
 'use client';
 
-import { projectSchema, taskSchema, memberSchema, type ProjectInput, type TaskInput, type MemberInput } from '@/lib/validations';
+import { projectSchema, taskSchema, userSchema, type ProjectInput, type TaskInput, type UserInput } from '@/lib/validations';
 import { FormDialog } from '@/components/form-dialog';
-import { projectApi, taskApi, memberApi } from '@/lib/api';
+import { projectApi, taskApi, userApi } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query';
 import { availableColors, getColorTokens } from '@/lib/colors';
@@ -46,11 +46,11 @@ function toDateTimeLocal(value?: string | null): string {
     .slice(0, 16);
 }
 
-function memberDefaults(defaultValues?: DialogDefaults<MemberInput>) {
+function userDefaults(defaultValues?: DialogDefaults<UserInput>) {
   return {
     name: defaultValues?.name ?? '',
     email: defaultValues?.email ?? '',
-    avatar: defaultValues?.avatar ?? '',
+    image: defaultValues?.image ?? '',
     color: defaultValues?.color ?? 'emerald',
   };
 }
@@ -114,12 +114,12 @@ export function ProjectDialog({ isOpen, onClose, defaultValues }: { isOpen: bool
   );
 }
 
-export function TaskDialog({ isOpen, onClose, defaultValues, projects, members }: { 
+export function TaskDialog({ isOpen, onClose, defaultValues, projects, users }: { 
   isOpen: boolean; 
   onClose: () => void; 
   defaultValues?: DialogDefaults<TaskInput>;
   projects: Array<{ id: string; name: string }>;
-  members: Array<{ id: string; name: string }>;
+  users: Array<{ id: string; name: string }>;
 }) {
   const queryClient = useQueryClient();
 
@@ -207,7 +207,7 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, members }
                 <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Unassigned</SelectItem>
-                  {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -236,25 +236,25 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, members }
   );
 }
 
-export function MemberDialog({ isOpen, onClose, defaultValues }: { isOpen: boolean; onClose: () => void; defaultValues?: DialogDefaults<MemberInput> }) {
+export function UserDialog({ isOpen, onClose, defaultValues }: { isOpen: boolean; onClose: () => void; defaultValues?: DialogDefaults<UserInput> }) {
   const queryClient = useQueryClient();
 
   return (
     <FormDialog
-      schema={memberSchema}
+      schema={userSchema}
       title={defaultValues ? 'Edit Member' : 'New Member'}
       description={defaultValues ? 'Update member details' : 'Add a new team member'}
-      defaultValues={memberDefaults(defaultValues)}
+      defaultValues={userDefaults(defaultValues)}
       isOpen={isOpen}
       onClose={onClose}
       submitLabel={defaultValues ? 'Update' : 'Add'}
       onSubmit={async (data) => {
         if (defaultValues?.id) {
-          await memberApi.update(defaultValues.id, data);
+          await userApi.update(defaultValues.id, data);
         } else {
-          await memberApi.create(data);
+          await userApi.create(data);
         }
-        queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       }}
     >
@@ -271,8 +271,8 @@ export function MemberDialog({ isOpen, onClose, defaultValues }: { isOpen: boole
             {dialogForm.formState.errors.email && <p className="text-sm text-destructive">{dialogForm.formState.errors.email.message as string}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="avatar">Avatar URL</Label>
-            <Input id="avatar" {...dialogForm.register('avatar')} placeholder="https://example.com/avatar.png" />
+            <Label htmlFor="image">Avatar URL</Label>
+            <Input id="image" {...dialogForm.register('image')} placeholder="https://example.com/avatar.png" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="color">Color</Label>

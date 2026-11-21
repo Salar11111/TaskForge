@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         },
         include: {
           project: { select: { name: true } },
-          assignee: { select: { name: true, avatar: true, color: true } },
+          assignee: { select: { name: true, image: true, color: true } },
         },
         orderBy: { dueDate: 'asc' },
         take: 10,

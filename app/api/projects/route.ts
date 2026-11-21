@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
           select: {
             status: true,
             assignee: {
-              select: { id: true, name: true, avatar: true, color: true },
+              select: { id: true, name: true, image: true, color: true },
             },
           },
         },
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     });
 
     const projectsWithMembers = projects.map((project) => {
-      const members = new Map<string, { id: string; name: string; avatar: string | null; color: string }>();
+      const members = new Map<string, { id: string; name: string; image: string | null; color: string }>();
 
       project.tasks.forEach((task) => {
         if (!task.assignee) return;

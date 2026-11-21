@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { memberApi, type Member } from '@/lib/api';
+import { userApi, type WorkspaceUser } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,18 +20,18 @@ import { useAppStore } from '@/lib/store';
 
 export function TeamView() {
   const queryClient = useQueryClient();
-  const { setMemberDialogOpen, searchQuery } = useAppStore();
-  const [deletingMember, setDeletingMember] = useState<Member | null>(null);
+  const { setUserDialogOpen, searchQuery } = useAppStore();
+  const [deletingUser, setDeletingUser] = useState<WorkspaceUser | null>(null);
 
-  const { data: members, isLoading } = useQuery({
-    queryKey: queryKeys.members.list(),
-    queryFn: () => memberApi.list(),
+  const { data: users, isLoading } = useQuery({
+    queryKey: queryKeys.users.list(),
+    queryFn: () => userApi.list(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: memberApi.delete,
+    mutationFn: userApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       toast.success('Member removed');
     },
@@ -39,11 +39,14 @@ export function TeamView() {
   });
 
   const handleDelete = () => {
-    if (deletingMember) {
-      deleteMutation.mutate(deletingMember.id);
-      setDeletingMember(null);
+    if (deletingUser) {
+      deleteMutation.mutate(deletingUser.id);
+      setDeletingUser(null);
     }
   };
+
+  const q = searchQuery.trim().toLowerCase();
+  const visible = (users || []).filter((u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
 
   if (isLoading) {
     return (
@@ -66,44 +69,36 @@ export function TeamView() {
           <h1 className='text-2xl font-semibold tracking-tight'>Team</h1>
           <p className='text-sm text-muted-foreground'>Team members and workload</p>
         </div>
-        <Button onClick={() => setMemberDialogOpen(true)}>
+        <Button onClick={() => setUserDialogOpen(true)}>
           <Plus className='h-4 w-4 mr-2' /> Add Member
         </Button>
       </div>
 
-      {(members || []).filter((m) =>
-        !searchQuery.trim() ||
-        m.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-        m.email.toLowerCase().includes(searchQuery.trim().toLowerCase())
-      ).length === 0 ? (
+      {visible.length === 0 ? (
         <Card className="animate-in fade-in-0 zoom-in-95 duration-200">
           <CardContent className='py-12 text-center'>
             <User className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
             <h2 className='text-lg font-semibold tracking-tight mb-1'>No team members yet</h2>
             <p className='text-sm text-muted-foreground mb-4'>Add your first team member to get started</p>
-            <Button onClick={() => setMemberDialogOpen(true)}>
+            <Button onClick={() => setUserDialogOpen(true)}>
               <Plus className='h-4 w-4 mr-2' /> Add Member
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {(members || []).filter((m) =>
-            !searchQuery.trim() ||
-            m.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-            m.email.toLowerCase().includes(searchQuery.trim().toLowerCase())
-          ).map((member) => {
-            const accent = getProjectAccent(member.color);
+          {visible.map((user) => {
+            const accent = getProjectAccent(user.color);
             return (
-              <Card key={member.id} className='group relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 p-0'>
+              <Card key={user.id} className='group relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 p-0'>
                 <div className='h-1.5 w-full' style={{ backgroundColor: accent.css }} />
                 <div className='p-5'>
                   <div className='flex items-start justify-between gap-2 mb-4'>
                     <div className='flex items-center gap-3 min-w-0'>
-                      <MemberAvatar name={member.name} avatar={member.avatar} color={member.color} size='lg' />
+                      <MemberAvatar name={user.name} avatar={user.image} color={user.color} size='lg' />
                       <div className='min-w-0'>
-                        <h2 className='text-base font-semibold tracking-tight truncate'>{member.name}</h2>
-                        <p className='text-xs text-muted-foreground truncate'>{member.email}</p>
+                        <h2 className='text-base font-semibold tracking-tight truncate'>{user.name}</h2>
+                        <p className='text-xs text-muted-foreground truncate'>{user.email}</p>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -113,11 +108,11 @@ export function TeamView() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
-                        <DropdownMenuItem onClick={() => setMemberDialogOpen(true, member.id)}>
+                        <DropdownMenuItem onClick={() => setUserDialogOpen(true, user.id)}>
                           <Edit className='h-4 w-4 mr-2' /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className='text-destructive' onClick={() => setDeletingMember(member)}>
+                        <DropdownMenuItem className='text-destructive' onClick={() => setDeletingUser(user)}>
                           <Trash2 className='h-4 w-4 mr-2' /> Remove
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -127,13 +122,13 @@ export function TeamView() {
                     <div>
                       <div className='flex items-center justify-between text-sm mb-1.5'>
                         <span className='text-muted-foreground'>Task Load</span>
-                        <span className='font-medium tabular-nums text-xs'>{member._count?.tasks || 0} tasks</span>
+                        <span className='font-medium tabular-nums text-xs'>{user.taskCount} tasks</span>
                       </div>
-                      <ProgressBar value={member._count?.tasks || 0} max={20} color={member.color} size='sm' />
+                      <ProgressBar value={user.taskCount} max={20} color={user.color} size='sm' />
                     </div>
                     <div className='flex flex-wrap gap-1.5'>
                       {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map(priority => {
-                        const count = member.tasksByPriority?.[priority] || 0;
+                        const count = user.tasksByPriority?.[priority] || 0;
                         if (count === 0) return null;
                         const tokens = getColorTokens(getPriorityColor(priority));
                         return (
@@ -151,13 +146,13 @@ export function TeamView() {
         </div>
       )}
 
-      <AlertDialog open={!!deletingMember} onOpenChange={(open) => !open && setDeletingMember(null)}>
+      <AlertDialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Member</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogDescription>
-            Are you sure you want to remove &quot;{deletingMember?.name}&quot; from the team? Their assigned tasks will be unassigned. This action cannot be undone.
+            Are you sure you want to remove &quot;{deletingUser?.name}&quot; from the team? Their assigned tasks will be unassigned. This action cannot be undone.
           </AlertDialogDescription>
           <AlertDialogAction onClick={handleDelete} className='bg-rose-600 hover:bg-rose-700 text-white'>
             Remove
