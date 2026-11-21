@@ -176,11 +176,14 @@ export function BoardView() {
     if (tasks) setLocalTasks(tasks);
   }, [tasks]);
 
+  // If the stored project no longer exists (deleted, or from a different
+  // workspace), fall back to the first available project.
   useEffect(() => {
-    if (!selectedProjectId && projects && projects.length > 0) {
-      // keep selection from store; if none, user can pick
+    if (!selectedProjectId || !projects) return;
+    if (!projects.some((p) => p.id === selectedProjectId)) {
+      setSelectedProjectId(projects[0].id);
     }
-  }, [projects, selectedProjectId]);
+  }, [projects, selectedProjectId, setSelectedProjectId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
