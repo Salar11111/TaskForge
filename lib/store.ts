@@ -7,10 +7,13 @@ export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 interface AppState {
   view: View;
   selectedProjectId: string | null;
+  /** Workspace selected via the switcher; null means the user's default. */
+  activeWorkspaceId: string | null;
   /** Global header search query — filters the current view's list. */
   searchQuery: string;
   setView: (view: View) => void;
   setSelectedProjectId: (id: string | null) => void;
+  setActiveWorkspaceId: (id: string | null) => void;
   setSearchQuery: (query: string) => void;
 
   // Shared dialog state — opened from the Header, the CommandPalette, or views.
@@ -33,9 +36,11 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       view: 'dashboard',
       selectedProjectId: null,
+      activeWorkspaceId: null,
       searchQuery: '',
       setView: (view) => set({ view }),
       setSelectedProjectId: (selectedProjectId) => set({ selectedProjectId }),
+      setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId, selectedProjectId: null, searchQuery: '' }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
 
       taskDialogOpen: false,
@@ -57,6 +62,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         view: state.view,
         selectedProjectId: state.selectedProjectId,
+        activeWorkspaceId: state.activeWorkspaceId,
       }),
     }
   )

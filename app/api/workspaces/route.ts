@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getWorkspaceContext, WorkspaceError } from '@/lib/authz';
+import { getSession, getWorkspaceContext, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { rateLimit } from '@/lib/ratelimit';
 import { z } from 'zod';
@@ -26,6 +26,21 @@ async function uniqueSlug(name: string): Promise<string> {
     const taken = await prisma.workspace.findUnique({ where: { slug } });
     if (!taken) return slug;
     slug = `${base}-${i}`;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getSession(request.headers);
+    if (!session) throw new WorkspaceError(401, 'Unauthorized');
+    const memberships = await prisma.workspaceMember.findMany({
+      where: { userId: session.user.id },
+      include: { workspace: { select: { id: true, name: true, slug: true } } },
+      orderBy: { workspace: { createdAt: 'asc' } },
+    });
+    return NextResponse.json(memberships.map((m) => m.workspace));
+  } catch (error) {
+    return apiErrorResponse(error, 'Failed to list workspaces');
   }
 }
 

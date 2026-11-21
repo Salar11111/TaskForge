@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Search, Plus, Sun, Moon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,15 @@ const createLabels = {
 export function Header() {
   const { view, searchQuery, setSearchQuery, setTaskDialogOpen, setProjectDialogOpen, setUserDialogOpen } = useAppStore();
   const { theme, setTheme } = useTheme();
+
+  const { data: session } = useQuery({
+    queryKey: ['auth', 'session'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/get-session');
+      return response.ok ? response.json() : null;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   const config = viewConfig[view];
 
@@ -81,9 +91,11 @@ export function Header() {
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
-          <div className="hidden lg:flex">
-            <MemberAvatar name="Alex Chen" avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" color="emerald" size="sm" />
-          </div>
+          {session?.user && (
+            <div className="hidden lg:flex">
+              <MemberAvatar name={session.user.name} avatar={session.user.image} color="emerald" size="sm" />
+            </div>
+          )}
         </div>
       </div>
     </header>

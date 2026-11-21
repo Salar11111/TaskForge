@@ -6,6 +6,7 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
@@ -40,6 +41,8 @@ export function MobileSidebar() {
             </button>
           </SheetClose>
         </SheetHeader>
+
+        <WorkspaceSwitcher />
 
         <nav className="flex-1 space-y-1 px-3 py-4" aria-label="Main navigation">
           {navigation.map((item) => {

@@ -1,5 +1,6 @@
 ﻿import { ColorName } from './colors';
 import { ProjectInput, TaskInput, UserInput } from './validations';
+import { useAppStore } from './store';
 
 export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -12,6 +13,12 @@ export interface Project {
   _count?: { tasks: { completed: number; total: number } };
   tasks?: Array<{ status: Status }>;
   members?: User[];
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export interface User {
@@ -73,9 +80,11 @@ const API_BASE = '/api';
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   // In server contexts (e.g. Server Components), `fetch` needs an absolute URL.
   const base = typeof window === 'undefined' ? process.env.NEXT_PUBLIC_APP_URL || '' : '';
+  const activeWorkspaceId = useAppStore.getState().activeWorkspaceId;
   const response = await fetch(`${base}${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(activeWorkspaceId ? { 'x-workspace-id': activeWorkspaceId } : {}),
       ...options.headers,
     },
     ...options,
@@ -117,4 +126,8 @@ export const userApi = {
 
 export const statsApi = {
   get: () => request<Stats>('/stats'),
+};
+
+export const workspaceApi = {
+  list: () => request<Workspace[]>('/workspaces'),
 };

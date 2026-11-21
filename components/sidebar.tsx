@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
@@ -27,6 +28,8 @@ export function Sidebar() {
           TaskForge
         </Link>
       </div>
+
+      <WorkspaceSwitcher />
 
       <nav className="flex-1 space-y-1 px-3 py-4" aria-label="Main navigation">
         {navigation.map((item) => {
