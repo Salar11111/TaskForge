@@ -4,32 +4,35 @@ import { taskSchema } from '@/lib/validations';
 import { requireWorkspace, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
+import { parsePagination } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
     const ctx = await requireWorkspace(request);
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
+    const { limit, offset } = parsePagination(searchParams);
 
     const where = {
       ...(projectId ? { projectId } : {}),
       project: { workspaceId: ctx.workspace.id },
     };
 
-    const tasks = await prisma.task.findMany({
-      where,
-      include: {
-        assignee: {
-          select: { id: true, name: true, image: true, color: true },
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        include: {
+          assignee: { select: { id: true, name: true, image: true, color: true } },
+          project: { select: { id: true, name: true, color: true } },
         },
-        project: {
-          select: { id: true, name: true, color: true },
-        },
-      },
-      orderBy: [{ status: 'asc' }, { order: 'asc' }],
-    });
+        orderBy: [{ status: 'asc' }, { order: 'asc' }],
+        take: limit,
+        skip: offset,
+      }),
+      prisma.task.count({ where }),
+    ]);
 
-    return NextResponse.json(tasks);
+    return NextResponse.json(tasks, { headers: { 'X-Total-Count': String(total) } });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to fetch tasks');
   }

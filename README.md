@@ -31,10 +31,12 @@ Open http://localhost:3000. The seeded admin is **`admin@taskforge.app`** / **`T
 
 ## Auth & authorization
 
+- **Sign up** at `/signup`; new accounts land on `/setup` to create their first workspace. The seeded admin (`admin@taskforge.app`) is for the demo workspace.
 - better-auth email/password handles `/api/auth/*`; sessions are cookies.
 - **Every** data route (`/api/projects`, `/api/tasks`, `/api/users`, `/api/stats`, `/api/realtime`, `/api/workspaces`) requires a session and a workspace membership — enforced in `lib/authz.ts` (`requireWorkspace`).
 - All queries are scoped to the caller's workspace. Workspace selection comes from the `x-workspace-id` header (or `?workspaceId=` for EventSource); the server ignores IDs for workspaces the user is not a member of.
-- Errors are mapped centrally in `lib/api-error.ts`: Zod/JSON → 400, FK → 400, duplicate → 409, missing → 404, unknown → 500. Rate limiting lives in `lib/ratelimit.ts` (auth POST + workspace creation).
+- Errors are mapped centrally in `lib/api-error.ts`: Zod/JSON → 400, FK → 400, duplicate → 409, missing → 404, unknown → 500. Rate limiting lives in `lib/ratelimit.ts` (auth POST, workspace creation, plus all other `/api/*` routes via `middleware.ts`).
+- List endpoints (`/api/tasks`, `/api/projects`, `/api/users`) accept `?limit=` (1–500, default 500) and `?offset=`; `X-Total-Count` reports the unpaginated total. Invalid values return 400.
 
 ## Architecture
 

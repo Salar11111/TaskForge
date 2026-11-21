@@ -4,15 +4,18 @@ import { projectSchema } from '@/lib/validations';
 import { requireWorkspace } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
+import { parsePagination } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
     const ctx = await requireWorkspace(request);
     const { searchParams } = new URL(request.url);
     const stats = searchParams.get('stats') === 'true';
+    const { limit, offset } = parsePagination(searchParams);
 
-    const projects = await prisma.project.findMany({
-      where: { workspaceId: ctx.workspace.id },
+    const [projects, total] = await Promise.all([
+      prisma.project.findMany({
+        where: { workspaceId: ctx.workspace.id },
       include: {
         _count: {
           select: { tasks: true },
@@ -26,8 +29,12 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.project.count({ where: { workspaceId: ctx.workspace.id } }),
+    ]);
 
     const projectsWithMembers = projects.map((project) => {
       const members = new Map<string, { id: string; name: string; image: string | null; color: string }>();
@@ -64,10 +71,10 @@ export async function GET(request: NextRequest) {
           },
         };
       });
-      return NextResponse.json(projectsWithStats);
+      return NextResponse.json(projectsWithStats, { headers: { 'X-Total-Count': String(total) } });
     }
 
-    return NextResponse.json(projectsWithMembers);
+    return NextResponse.json(projectsWithMembers, { headers: { 'X-Total-Count': String(total) } });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to fetch projects');
   }

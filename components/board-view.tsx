@@ -29,6 +29,7 @@ import { getColorTokens, getStatusColor, getPriorityColor } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query';
+import { changedUpdates } from '@/lib/reorder';
 import { MemberAvatar } from '@/components/member-avatar';
 import { formatRelativeDate } from '@/lib/dates';
 import { useAppStore } from '@/lib/store';
@@ -247,6 +248,13 @@ export function BoardView() {
     setOverColumn(findContainer(over.id as string));
   };
 
+  // Only send rows whose status/order actually changed — not whole columns.
+  const commitReorder = useCallback((next: Task[]) => {
+    setLocalTasks(next);
+    const updates = changedUpdates(next, tasks ?? []);
+    if (updates.length > 0) reorderMutation.mutate({ tasks: next, updates });
+  }, [tasks, reorderMutation]);
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -270,11 +278,7 @@ export function BoardView() {
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reordered = arrayMove(items, oldIndex, newIndex).map((t, i) => ({ ...t, order: i }));
         nextTasks = nextTasks.map(t => reordered.find(r => r.id === t.id) || t);
-        setLocalTasks(nextTasks);
-        reorderMutation.mutate({
-          tasks: nextTasks,
-          updates: reordered.map(t => ({ id: t.id, status: overContainer as Status, order: t.order })),
-        });
+        commitReorder(nextTasks);
       }
       return;
     }
@@ -292,12 +296,8 @@ export function BoardView() {
       if (t.id === moved.id) return reDest.find(r => r.id === t.id)!;
       return reSource.find(r => r.id === t.id) || reDest.find(r => r.id === t.id) || t;
     });
-    setLocalTasks(nextTasks);
-    reorderMutation.mutate({
-      tasks: nextTasks,
-      updates: [...reSource, ...reDest].map(t => ({ id: t.id, status: t.status as Status, order: t.order })),
-    });
-  }, [localTasks, groupedTasks, reorderMutation, findContainer]);
+    commitReorder(nextTasks);
+  }, [localTasks, groupedTasks, findContainer, commitReorder]);
 
   const activeTask = activeId ? localTasks.find(t => t.id === activeId) : null;
 

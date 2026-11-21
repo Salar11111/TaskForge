@@ -4,14 +4,18 @@ import { userSchema } from '@/lib/validations';
 import { requireWorkspace } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
+import { parsePagination } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
     const ctx = await requireWorkspace(request);
-    const users = await prisma.user.findMany({
-      where: { memberships: { some: { workspaceId: ctx.workspace.id } } },
-      orderBy: { createdAt: 'asc' },
-    });
+    const { searchParams } = new URL(request.url);
+    const { limit, offset } = parsePagination(searchParams);
+    const where = { memberships: { some: { workspaceId: ctx.workspace.id } } };
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({ where, orderBy: { createdAt: 'asc' }, take: limit, skip: offset }),
+      prisma.user.count({ where }),
+    ]);
 
     const assigned = await prisma.task.findMany({
       where: { assigneeId: { in: users.map((u) => u.id) } },
@@ -29,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       users.map((u) => ({ ...u, ...(stats.get(u.id) ?? { taskCount: 0, tasksByPriority: {} }) })),
+      { headers: { 'X-Total-Count': String(total) } },
     );
   } catch (error) {
     return apiErrorResponse(error, 'Failed to fetch users');
