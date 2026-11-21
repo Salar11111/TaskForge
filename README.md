@@ -1,124 +1,51 @@
 # TaskForge
 
-TaskForge is a modern task management dashboard for organizing projects, assigning work, tracking deadlines, and reviewing team progress.
+A small task-management app: Kanban board, projects, team workload, dashboard analytics, and multi-workspace support.
 
-Built with Next.js, React, TypeScript, Tailwind CSS, Prisma, and shadcn/ui.
+## Stack
 
-## Screenshots
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Prisma 5 + SQLite · TanStack Query 5 · Zustand · better-auth 1.7 · Radix UI · dnd-kit · Vitest · Playwright
 
-> Screenshots are stored in [`docs/screenshots/`](docs/screenshots/). Run the app locally to view the latest interface.
-
-### Dashboard
-
-![TaskForge dashboard](docs/screenshots/dashboard.png)
-
-### Projects
-
-![TaskForge projects](docs/screenshots/projects.png)
-
-### Board
-
-![TaskForge board](docs/screenshots/board.png)
-
-### Team
-
-![TaskForge team](docs/screenshots/team.png)
-
-## Features
-
-- **Dashboard** - Overview with charts, stats, and upcoming deadlines
-- **Projects** - Project management with filtering and search
-- **Board** - Kanban board with drag-and-drop task reordering
-- **Team** - Team member management with workload visualization
-- **Dark Mode** - Full dark mode support with next-themes
-- **Responsive** - Mobile-first design with sidebar sheet on mobile
-
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind 4 + shadcn/ui (New York style)
-- **Database**: SQLite + Prisma ORM
-- **State**: Zustand + TanStack Query
-- **Forms**: React Hook Form + Zod
-- **Charts**: Recharts
-- **Drag & Drop**: @dnd-kit
-- **Notifications**: Sonner
-- **Icons**: Lucide React
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- npm
-
-### Installation
+## Quick start
 
 ```bash
-# Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env
-
-# Initialize database
-npm run db:push
-npm run db:seed
-
-# Start development server
+npm run db:push          # creates/updates prisma/dev.db
+npm run db:seed          # demo workspace, 4 projects, 19 tasks, 5 team members
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open http://localhost:3000. The seeded admin is **`admin@taskforge.app`** / **`TaskForge-2026!`** (override with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`).
 
-## Available Scripts
+> On Windows, stop the dev/prod server before `npm run db:push` — otherwise Prisma may hit an EPERM when replacing the query engine DLL.
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
-| `npm run db:push` | Push Prisma schema to database |
-| `npm run db:seed` | Seed database with sample data |
-| `npm run db:studio` | Open Prisma Studio |
+## Scripts
 
-## Project Structure
+| Command | Purpose |
+|---|---|
+| `npm run dev` / `build` / `start` | Development / production build / production server |
+| `npm run lint` / `typecheck` | ESLint / TypeScript |
+| `npm run test:unit` | Vitest — color-token parity, error mapping, rate limiter |
+| `npm run test:e2e` | Playwright Chromium — login, anonymous API access, board CRUD |
+| `npm run db:push` / `db:seed` / `db:studio` | Prisma schema / seed data / database GUI |
 
-```
-├── app/
-│   ├── api/           # API routes
-│   ├── globals.css    # Global styles
-│   ├── layout.tsx     # Root layout
-│   └── page.tsx       # Main page (SPA shell)
-├── components/
-│   ├── ui/            # shadcn/ui components
-│   ├── *.tsx          # Custom components
-├── lib/
-│   ├── api.ts         # API client
-│   ├── colors.ts      # Color token system
-│   ├── dates.ts       # Date utilities
-│   ├── prisma.ts      # Prisma client
-│   ├── query.ts       # TanStack Query setup
-│   ├── store.ts       # Zustand store
-│   ├── utils.ts       # Utility functions
-│   └── validations.ts # Zod schemas
-├── prisma/
-│   ├── schema.prisma  # Database schema
-│   └── seed.ts        # Database seed
-└── public/            # Static assets
-```
+## Auth & authorization
 
-## Color System
+- better-auth email/password handles `/api/auth/*`; sessions are cookies.
+- **Every** data route (`/api/projects`, `/api/tasks`, `/api/users`, `/api/stats`, `/api/realtime`, `/api/workspaces`) requires a session and a workspace membership — enforced in `lib/authz.ts` (`requireWorkspace`).
+- All queries are scoped to the caller's workspace. Workspace selection comes from the `x-workspace-id` header (or `?workspaceId=` for EventSource); the server ignores IDs for workspaces the user is not a member of.
+- Errors are mapped centrally in `lib/api-error.ts`: Zod/JSON → 400, FK → 400, duplicate → 409, missing → 404, unknown → 500. Rate limiting lives in `lib/ratelimit.ts` (auth POST + workspace creation).
 
-TaskForge uses a custom color token system with the following palette:
-- **Primary**: Emerald
-- **Status Colors**: Todo (Slate), In Progress (Amber), Review (Violet), Done (Emerald)
-- **Priority Colors**: Low (Slate), Medium (Sky), High (Orange), Urgent (Rose)
-- **Accent Colors**: Violet, Amber, Rose, Cyan, Orange, Teal, Pink, Sky
+## Architecture
 
-## License
+- `app/api/*` — route handlers; `lib/` — auth, authz, errors, Prisma, events, API client, store, color tokens.
+- `app/client-shell.tsx` mounts the shared dialogs, command palette, and SSE listener; views (`dashboard`, `projects`, `board`, `team`) read from TanStack Query.
+- `lib/events.ts` is an in-process, workspace-scoped pub/sub. Mutations publish events; `/api/realtime` streams them via SSE; the client invalidates affected queries. A multi-instance deployment should replace `publish` with a shared pub/sub (Redis, etc.).
 
-MIT
+## Environment
+
+Copy `.env.example` to `.env`. Required vars: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random chars), `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`.
+
+## Tests
+
+`npm run test:unit` and `npm run test:e2e` (after `npx playwright install chromium`). CI (`.github/workflows/ci.yml`) runs lint, typecheck, build, unit, and e2e jobs.

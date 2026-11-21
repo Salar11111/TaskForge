@@ -312,7 +312,7 @@ export function BoardView() {
           <CardHeader><CardTitle>Select a Project</CardTitle></CardHeader>
           <CardContent>
             <Select value={selectedProjectId || ''} onValueChange={setSelectedProjectId}>
-              <SelectTrigger className='w-full'><SelectValue placeholder='Select project' /></SelectTrigger>
+              <SelectTrigger aria-label='Project' className='w-full'><SelectValue placeholder='Select project' /></SelectTrigger>
               <SelectContent>
                 {projects?.map((project) => (
                   <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
@@ -358,7 +358,7 @@ export function BoardView() {
         </div>
         <div className='flex items-center gap-3'>
           <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-            <SelectTrigger className='w-56 h-9'><SelectValue placeholder='Select project' /></SelectTrigger>
+            <SelectTrigger aria-label='Project' className='w-56 h-9'><SelectValue placeholder='Select project' /></SelectTrigger>
             <SelectContent>
               {projects?.map((project) => (
                 <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
