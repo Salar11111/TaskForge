@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query';
 import { Skeleton, SkeletonCard } from '@/components/skeleton';
 import { useAppStore } from '@/lib/store';
+import { type ColorName } from '@/lib/colors';
 
 export function TeamView() {
   const queryClient = useQueryClient();
@@ -124,7 +125,7 @@ export function TeamView() {
                         <span className='text-muted-foreground'>Task Load</span>
                         <span className='font-medium tabular-nums text-xs'>{user.taskCount} tasks</span>
                       </div>
-                      <ProgressBar value={user.taskCount} max={20} color={user.color} size='sm' />
+                      <ProgressBar value={user.taskCount} max={20} color={user.color as ColorName} size='sm' />
                     </div>
                     <div className='flex flex-wrap gap-1.5'>
                       {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map(priority => {

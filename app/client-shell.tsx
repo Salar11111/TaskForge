@@ -10,6 +10,7 @@ import { TaskDialog, ProjectDialog, UserDialog } from '@/components/dialogs';
 import { CommandPalette } from '@/components/command-palette';
 import { projectApi, taskApi, userApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
+import { type ColorName } from '@/lib/colors';
 
 export default function ClientShell() {
   const {
@@ -64,7 +65,7 @@ export default function ClientShell() {
         name: editedUser.name,
         email: editedUser.email,
         image: editedUser.image ?? undefined,
-        color: editedUser.color,
+        color: editedUser.color as ColorName,
       }
     : undefined;
 

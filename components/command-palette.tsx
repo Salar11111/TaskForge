@@ -5,9 +5,11 @@ import { Command } from 'cmdk';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Search, Plus, LayoutDashboard, FolderKanban, Users, Settings } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const { setTaskDialogOpen, setView } = useAppStore();
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function CommandPalette() {
               <Command.Item onSelect={() => { setTaskDialogOpen(true); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Plus className="h-4 w-4" /> Create task
               </Command.Item>
-              <Command.Item onSelect={() => setOpen(false)} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => { router.push('/settings'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Settings className="h-4 w-4" /> Settings
               </Command.Item>
             </Command.Group>

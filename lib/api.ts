@@ -19,7 +19,7 @@ export interface User {
   name: string;
   email: string;
   image: string | null;
-  color: ColorName;
+  color: string;
 }
 
 export interface WorkspaceUser extends User {
@@ -71,7 +71,9 @@ export interface Stats {
 const API_BASE = '/api';
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  // In server contexts (e.g. Server Components), `fetch` needs an absolute URL.
+  const base = typeof window === 'undefined' ? process.env.NEXT_PUBLIC_APP_URL || '' : '';
+  const response = await fetch(`${base}${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
