@@ -1,6 +1,28 @@
 # TaskForge
 
-A modern task management application built with Next.js 16, React 19, Tailwind 4, Prisma, and shadcn/ui.
+TaskForge is a modern task management dashboard for organizing projects, assigning work, tracking deadlines, and reviewing team progress.
+
+Built with Next.js, React, TypeScript, Tailwind CSS, Prisma, and shadcn/ui.
+
+## Screenshots
+
+> Screenshots are stored in [`docs/screenshots/`](docs/screenshots/). Run the app locally to view the latest interface.
+
+### Dashboard
+
+![TaskForge dashboard](docs/screenshots/dashboard.png)
+
+### Projects
+
+![TaskForge projects](docs/screenshots/projects.png)
+
+### Board
+
+![TaskForge board](docs/screenshots/board.png)
+
+### Team
+
+![TaskForge team](docs/screenshots/team.png)
 
 ## Features
 
@@ -13,7 +35,7 @@ A modern task management application built with Next.js 16, React 19, Tailwind 4
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind 4 + shadcn/ui (New York style)
 - **Database**: SQLite + Prisma ORM

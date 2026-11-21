@@ -1,0 +1,219 @@
+﻿'use client';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { projectApi, type Project } from '@/lib/api';
+import { ProjectDialog } from '@/components/dialogs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { AvatarStack } from '@/components/avatar-stack';
+import { ProgressBar } from '@/components/progress-bar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Plus, Search, MoreHorizontal, Trash2, Edit, Kanban, Folder } from 'lucide-react';
+import { getColorTokens, getProjectAccent } from '@/lib/colors';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { queryKeys } from '@/lib/query';
+import { Skeleton, SkeletonCard } from '@/components/skeleton';
+import { useAppStore } from '@/lib/store';
+
+export function ProjectsView() {
+  const queryClient = useQueryClient();
+  const { setView, setSelectedProjectId } = useAppStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+
+  const { data: projects, isLoading } = useQuery({
+    queryKey: queryKeys.projects.list(true),
+    queryFn: () => projectApi.list(true),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: projectApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      toast.success('Project deleted');
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const handleDelete = () => {
+    if (deletingProject) {
+      deleteMutation.mutate(deletingProject.id);
+      setDeletingProject(null);
+    }
+  };
+
+  const handleOpenBoard = (project: Project) => {
+    setSelectedProjectId(project.id);
+    setView('board');
+  };
+
+  const allProjects = projects || [];
+  const filteredProjects = allProjects.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const total = p._count?.tasks?.total || 0;
+    const completed = p._count?.tasks?.completed || 0;
+    const isCompleted = total > 0 && completed === total;
+    const matchesFilter = filter === 'all' || (filter === 'completed' ? isCompleted : !isCompleted);
+    return matchesSearch && matchesFilter;
+  });
+
+  const counts = {
+    all: allProjects.length,
+    active: allProjects.filter(p => !((p._count?.tasks?.total || 0) > 0 && (p._count?.tasks?.completed || 0) === (p._count?.tasks?.total || 0))).length,
+    completed: allProjects.filter(p => (p._count?.tasks?.total || 0) > 0 && (p._count?.tasks?.completed || 0) === (p._count?.tasks?.total || 0)).length,
+  };
+
+  if (isLoading) {
+    return (
+      <div className='space-y-6'>
+        <div className='flex items-center justify-between'>
+          <Skeleton className='h-8 w-48' variant='rectangular' />
+          <Skeleton className='h-10 w-32' variant='rectangular' />
+        </div>
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+          {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+        <div>
+          <h1 className='text-2xl font-semibold tracking-tight'>Projects</h1>
+          <p className='text-sm text-muted-foreground'>Manage and organize your projects</p>
+        </div>
+        <Button onClick={() => { setEditingProject(null); setProjectDialogOpen(true); }}>
+          <Plus className='h-4 w-4 mr-2' /> New Project
+        </Button>
+      </div>
+
+      <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
+        <div className='relative w-full sm:max-w-sm'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            placeholder='Search projects...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='pl-9 h-9'
+          />
+        </div>
+        <div className='flex items-center gap-2'>
+          {(['all', 'active', 'completed'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200',
+                filter === f
+                  ? 'bg-foreground text-background'
+                  : 'border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <span className="capitalize">{f}</span>
+              <span className={cn('tabular-nums text-[0.65rem] rounded-full px-1.5 py-0.5', filter === f ? 'bg-background/20' : 'bg-muted')}>{counts[f]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filteredProjects.length === 0 ? (
+        <Card className="animate-in fade-in-0 zoom-in-95 duration-200">
+          <CardContent className='py-12 text-center'>
+            <Folder className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
+            <h3 className='text-lg font-semibold tracking-tight mb-1'>No projects found</h3>
+            <p className='text-sm text-muted-foreground mb-4'>{searchQuery || filter !== 'all' ? 'Try adjusting your filters' : 'Create your first project to get started'}</p>
+            <Button onClick={() => { setEditingProject(null); setProjectDialogOpen(true); }}>
+              <Plus className='h-4 w-4 mr-2' /> Create Project
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+          {filteredProjects.map((project) => {
+            const accent = getProjectAccent(project.color);
+            const total = project._count?.tasks?.total || 0;
+            const completed = project._count?.tasks?.completed || 0;
+            return (
+              <Card key={project.id} className='group relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 p-0'>
+                <div className='h-1.5 w-full' style={{ backgroundColor: accent.css }} />
+                <div className='p-5'>
+                  <div className='flex items-start justify-between gap-2 mb-3'>
+                    <div className='min-w-0'>
+                      <h3 className='text-base font-semibold tracking-tight truncate'>{project.name}</h3>
+                      {project.description && <p className='text-sm text-muted-foreground mt-1 line-clamp-2'>{project.description}</p>}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' size='icon' className='h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem onClick={() => { setEditingProject(project); setProjectDialogOpen(true); }}>
+                          <Edit className='h-4 w-4 mr-2' /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenBoard(project)}>
+                          <Kanban className='h-4 w-4 mr-2' /> Open Board
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className='text-destructive' onClick={() => setDeletingProject(project)}>
+                          <Trash2 className='h-4 w-4 mr-2' /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className='space-y-3'>
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='text-muted-foreground'>Progress</span>
+                      <span className='font-medium tabular-nums text-xs'>{completed}/{total}</span>
+                    </div>
+                    <ProgressBar value={completed} max={total || 1} color={project.color} size='sm' />
+                    <div className='flex items-center justify-between pt-1'>
+                      <div className='flex items-center gap-2'>
+                        <span className={cn('w-2 h-2 rounded-full', getColorTokens(project.color).dot)} />
+                        <span className='text-xs text-muted-foreground capitalize'>{project.color}</span>
+                      </div>
+                      <AvatarStack members={project.members || []} max={3} size='sm' />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <ProjectDialog
+        isOpen={projectDialogOpen}
+        onClose={() => { setProjectDialogOpen(false); setEditingProject(null); }}
+        defaultValues={editingProject ?? undefined}
+      />
+
+      <AlertDialog open={!!deletingProject} onOpenChange={(open) => !open && setDeletingProject(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Are you sure you want to delete &quot;{deletingProject?.name}&quot;? This will also delete all tasks in this project. This action cannot be undone.
+          </AlertDialogDescription>
+          <AlertDialogAction onClick={handleDelete} className='bg-rose-600 hover:bg-rose-700 text-white'>
+            Delete
+          </AlertDialogAction>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
