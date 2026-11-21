@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { taskApi, projectApi, memberApi, type Task } from '@/lib/api';
+import { taskApi, projectApi, type Task } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -164,11 +164,6 @@ export function BoardView() {
   const { data: projects } = useQuery({
     queryKey: queryKeys.projects.list(),
     queryFn: () => projectApi.list(),
-  });
-
-  const { data: members } = useQuery({
-    queryKey: queryKeys.members.list(),
-    queryFn: () => memberApi.list(),
   });
 
   const { data: tasks, isLoading } = useQuery({
