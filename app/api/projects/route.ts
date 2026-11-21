@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
 import { requireWorkspace } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
+import { publish } from '@/lib/events';
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    publish('project.created', ctx.workspace.id);
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to create project');

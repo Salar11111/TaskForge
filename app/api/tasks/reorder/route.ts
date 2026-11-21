@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { taskReorderSchema } from '@/lib/validations';
 import { requireWorkspace, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
+import { publish } from '@/lib/events';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -24,6 +25,7 @@ export async function PATCH(request: NextRequest) {
       );
     });
 
+    publish('task.updated', ctx.workspace.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to reorder tasks');

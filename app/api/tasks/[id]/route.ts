@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { taskSchema } from '@/lib/validations';
 import { requireWorkspace, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
+import { publish } from '@/lib/events';
 
 const taskIncludes = {
   assignee: {
@@ -75,6 +76,7 @@ export async function PATCH(
       throw new WorkspaceError(404, 'Task not found');
     }
 
+    publish('task.updated', ctx.workspace.id);
     return NextResponse.json(task);
   } catch (error) {
     return apiErrorResponse(error, 'Failed to update task');
@@ -94,6 +96,7 @@ export async function DELETE(
     if (deleted.count === 0) {
       throw new WorkspaceError(404, 'Task not found');
     }
+    publish('task.deleted', ctx.workspace.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to delete task');

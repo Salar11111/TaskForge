@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { userSchema } from '@/lib/validations';
 import { requireWorkspace } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
+import { publish } from '@/lib/events';
 
 export async function GET(
   request: NextRequest,
@@ -42,6 +43,7 @@ export async function PATCH(
       where: { id, memberships: { some: { workspaceId: ctx.workspace.id } } },
       include: { memberships: { where: { workspaceId: ctx.workspace.id }, select: { id: true, role: true, createdAt: true } } },
     });
+    publish('user.updated', ctx.workspace.id);
     return NextResponse.json(user);
   } catch (error) {
     return apiErrorResponse(error, 'Failed to update user');
@@ -59,6 +61,7 @@ export async function DELETE(
       where: { id, memberships: { some: { workspaceId: ctx.workspace.id } } },
     });
     if (deleted.count === 0) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    publish('user.deleted', ctx.workspace.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to delete user');

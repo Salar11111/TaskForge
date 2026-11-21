@@ -8,6 +8,7 @@ import { BoardView } from '@/components/board-view';
 import { TeamView } from '@/components/team-view';
 import { TaskDialog, ProjectDialog, UserDialog } from '@/components/dialogs';
 import { CommandPalette } from '@/components/command-palette';
+import { Realtime } from '@/components/realtime';
 import { projectApi, taskApi, userApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
 import { type ColorName } from '@/lib/colors';
@@ -77,6 +78,7 @@ export default function ClientShell() {
       {view === 'team' && <TeamView />}
 
       <CommandPalette />
+      <Realtime />
 
       <TaskDialog
         isOpen={taskDialogOpen}
