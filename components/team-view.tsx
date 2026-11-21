@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { memberApi, type Member } from '@/lib/api';
-import { MemberDialog } from '@/components/dialogs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +16,11 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query';
 import { Skeleton, SkeletonCard } from '@/components/skeleton';
+import { useAppStore } from '@/lib/store';
 
 export function TeamView() {
   const queryClient = useQueryClient();
-  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const { setMemberDialogOpen, searchQuery } = useAppStore();
   const [deletingMember, setDeletingMember] = useState<Member | null>(null);
 
   const { data: members, isLoading } = useQuery({
@@ -67,25 +66,33 @@ export function TeamView() {
           <h1 className='text-2xl font-semibold tracking-tight'>Team</h1>
           <p className='text-sm text-muted-foreground'>Team members and workload</p>
         </div>
-        <Button onClick={() => { setEditingMember(null); setMemberDialogOpen(true); }}>
+        <Button onClick={() => setMemberDialogOpen(true)}>
           <Plus className='h-4 w-4 mr-2' /> Add Member
         </Button>
       </div>
 
-      {members?.length === 0 ? (
+      {(members || []).filter((m) =>
+        !searchQuery.trim() ||
+        m.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        m.email.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      ).length === 0 ? (
         <Card className="animate-in fade-in-0 zoom-in-95 duration-200">
           <CardContent className='py-12 text-center'>
             <User className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
-            <h3 className='text-lg font-semibold tracking-tight mb-1'>No team members yet</h3>
+            <h2 className='text-lg font-semibold tracking-tight mb-1'>No team members yet</h2>
             <p className='text-sm text-muted-foreground mb-4'>Add your first team member to get started</p>
-            <Button onClick={() => { setEditingMember(null); setMemberDialogOpen(true); }}>
+            <Button onClick={() => setMemberDialogOpen(true)}>
               <Plus className='h-4 w-4 mr-2' /> Add Member
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {members?.map((member) => {
+          {(members || []).filter((m) =>
+            !searchQuery.trim() ||
+            m.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+            m.email.toLowerCase().includes(searchQuery.trim().toLowerCase())
+          ).map((member) => {
             const accent = getProjectAccent(member.color);
             return (
               <Card key={member.id} className='group relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 p-0'>
@@ -106,7 +113,7 @@ export function TeamView() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
-                        <DropdownMenuItem onClick={() => { setEditingMember(member); setMemberDialogOpen(true); }}>
+                        <DropdownMenuItem onClick={() => setMemberDialogOpen(true, member.id)}>
                           <Edit className='h-4 w-4 mr-2' /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -143,12 +150,6 @@ export function TeamView() {
           })}
         </div>
       )}
-
-      <MemberDialog
-        isOpen={memberDialogOpen}
-        onClose={() => { setMemberDialogOpen(false); setEditingMember(null); }}
-        defaultValues={editingMember ?? undefined}
-      />
 
       <AlertDialog open={!!deletingMember} onOpenChange={(open) => !open && setDeletingMember(null)}>
         <AlertDialogContent>

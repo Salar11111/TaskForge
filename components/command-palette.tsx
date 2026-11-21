@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Search, Plus, LayoutDashboard, FolderKanban, Users, Settings } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const { setTaskDialogOpen, setView } = useAppStore();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -32,21 +32,24 @@ export function CommandPalette() {
           <Command.List className="max-h-[300px] overflow-y-auto p-2">
             <Command.Empty className="py-6 text-center text-sm">No results found.</Command.Empty>
             <Command.Group heading="Navigation">
-              <Command.Item onSelect={() => { router.push('/dashboard'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => { setView('dashboard'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </Command.Item>
-              <Command.Item onSelect={() => { router.push('/projects'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => { setView('projects'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <FolderKanban className="h-4 w-4" /> Projects
               </Command.Item>
-              <Command.Item onSelect={() => { router.push('/team'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => { setView('board'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+                <FolderKanban className="h-4 w-4" /> Board
+              </Command.Item>
+              <Command.Item onSelect={() => { setView('team'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Users className="h-4 w-4" /> Team
               </Command.Item>
             </Command.Group>
             <Command.Group heading="Actions">
-              <Command.Item onSelect={() => { setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => { setTaskDialogOpen(true); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Plus className="h-4 w-4" /> Create task
               </Command.Item>
-              <Command.Item onSelect={() => { setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <Command.Item onSelect={() => setOpen(false)} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Settings className="h-4 w-4" /> Settings
               </Command.Item>
             </Command.Group>

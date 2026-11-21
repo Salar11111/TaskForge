@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectApi, type Project } from '@/lib/api';
-import { ProjectDialog } from '@/components/dialogs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,11 +20,8 @@ import { useAppStore } from '@/lib/store';
 
 export function ProjectsView() {
   const queryClient = useQueryClient();
-  const { setView, setSelectedProjectId } = useAppStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { setView, setSelectedProjectId, searchQuery, setSearchQuery, setProjectDialogOpen } = useAppStore();
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
 
   const { data: projects, isLoading } = useQuery({
@@ -93,7 +89,7 @@ export function ProjectsView() {
           <h1 className='text-2xl font-semibold tracking-tight'>Projects</h1>
           <p className='text-sm text-muted-foreground'>Manage and organize your projects</p>
         </div>
-        <Button onClick={() => { setEditingProject(null); setProjectDialogOpen(true); }}>
+        <Button onClick={() => setProjectDialogOpen(true)}>
           <Plus className='h-4 w-4 mr-2' /> New Project
         </Button>
       </div>
@@ -133,7 +129,7 @@ export function ProjectsView() {
             <Folder className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
             <h3 className='text-lg font-semibold tracking-tight mb-1'>No projects found</h3>
             <p className='text-sm text-muted-foreground mb-4'>{searchQuery || filter !== 'all' ? 'Try adjusting your filters' : 'Create your first project to get started'}</p>
-            <Button onClick={() => { setEditingProject(null); setProjectDialogOpen(true); }}>
+            <Button onClick={() => setProjectDialogOpen(true)}>
               <Plus className='h-4 w-4 mr-2' /> Create Project
             </Button>
           </CardContent>
@@ -160,7 +156,7 @@ export function ProjectsView() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
-                        <DropdownMenuItem onClick={() => { setEditingProject(project); setProjectDialogOpen(true); }}>
+                        <DropdownMenuItem onClick={() => setProjectDialogOpen(true, project.id)}>
                           <Edit className='h-4 w-4 mr-2' /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenBoard(project)}>
@@ -193,12 +189,6 @@ export function ProjectsView() {
           })}
         </div>
       )}
-
-      <ProjectDialog
-        isOpen={projectDialogOpen}
-        onClose={() => { setProjectDialogOpen(false); setEditingProject(null); }}
-        defaultValues={editingProject ?? undefined}
-      />
 
       <AlertDialog open={!!deletingProject} onOpenChange={(open) => !open && setDeletingProject(null)}>
         <AlertDialogContent>

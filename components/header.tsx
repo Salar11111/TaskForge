@@ -1,6 +1,5 @@
 ﻿'use client';
 
-import { useState } from 'react';
 import { Search, Plus, Sun, Moon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +24,8 @@ const createLabels = {
 };
 
 export function Header() {
-  const { view, setView } = useAppStore();
+  const { view, searchQuery, setSearchQuery, setTaskDialogOpen, setProjectDialogOpen, setMemberDialogOpen } = useAppStore();
   const { theme, setTheme } = useTheme();
-  const [searchQuery, setSearchQuery] = useState('');
 
   const config = viewConfig[view];
 
@@ -66,9 +64,9 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={() => setView('projects')}>New Project</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView('board')}>New Task</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView('team')}>New Member</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setProjectDialogOpen(true)}>New Project</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTaskDialogOpen(true)}>New Task</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setMemberDialogOpen(true)}>New Member</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

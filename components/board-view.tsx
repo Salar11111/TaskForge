@@ -18,7 +18,6 @@ import {
 import { SortableContext, useSortable, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { taskApi, projectApi, memberApi, type Task } from '@/lib/api';
-import { TaskDialog } from '@/components/dialogs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -154,25 +153,9 @@ function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, isOver }: 
   );
 }
 
-function taskToDialogDefaults(task: Task, selectedProjectId: string) {
-  return {
-    id: task.id,
-    title: task.title,
-    description: task.description ?? undefined,
-    status: task.status,
-    priority: task.priority,
-    projectId: task.projectId || selectedProjectId,
-    assigneeId: task.assigneeId ?? undefined,
-    dueDate: task.dueDate ?? undefined,
-    order: task.order,
-  };
-}
-
 export function BoardView() {
   const queryClient = useQueryClient();
-  const { selectedProjectId, setSelectedProjectId } = useAppStore();
-  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const { selectedProjectId, setSelectedProjectId, setTaskDialogOpen, searchQuery } = useAppStore();
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<Status | null>(null);
@@ -233,12 +216,22 @@ export function BoardView() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const filteredTasks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return localTasks;
+    return localTasks.filter((task) =>
+      task.title.toLowerCase().includes(q) ||
+      task.description?.toLowerCase().includes(q) ||
+      task.assignee?.name.toLowerCase().includes(q)
+    );
+  }, [localTasks, searchQuery]);
+
   const groupedTasks = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
-      acc[status] = localTasks.filter((task) => task.status === status).sort((a, b) => a.order - b.order);
+      acc[status] = filteredTasks.filter((task) => task.status === status).sort((a, b) => a.order - b.order);
       return acc;
     }, {} as Record<Status, Task[]>);
-  }, [localTasks]);
+  }, [filteredTasks]);
 
   const findContainer = useCallback((id: string): Status | null => {
     if (id.startsWith('column-')) return id.replace('column-', '') as Status;
@@ -374,7 +367,7 @@ export function BoardView() {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" onClick={() => { setEditingTask(null); setTaskDialogOpen(true); }}>
+          <Button size="sm" onClick={() => setTaskDialogOpen(true)}>
             <Plus className='h-4 w-4 mr-2' /> New Task
           </Button>
         </div>
@@ -388,8 +381,8 @@ export function BoardView() {
               status={status}
               tasks={groupedTasks[status] || []}
               isOver={overColumn === status}
-              onAddTask={() => { setEditingTask(null); setTaskDialogOpen(true); }}
-              onEditTask={(task) => { setEditingTask(task); setTaskDialogOpen(true); }}
+              onAddTask={() => setTaskDialogOpen(true, null, status)}
+              onEditTask={(task) => setTaskDialogOpen(true, task.id)}
               onDeleteTask={setDeletingTask}
             />
           ))}
@@ -398,14 +391,6 @@ export function BoardView() {
           {activeTask ? <TaskCardContent task={activeTask} onEdit={() => {}} onDelete={() => {}} overlay /> : null}
         </DragOverlay>
       </DndContext>
-
-      <TaskDialog
-        isOpen={taskDialogOpen}
-        onClose={() => { setTaskDialogOpen(false); setEditingTask(null); }}
-        defaultValues={editingTask ? taskToDialogDefaults(editingTask, selectedProjectId) : { projectId: selectedProjectId, status: 'TODO', priority: 'MEDIUM' }}
-        projects={projects || []}
-        members={members || []}
-      />
 
       <AlertDialog open={!!deletingTask} onOpenChange={(open) => !open && setDeletingTask(null)}>
         <AlertDialogContent>
