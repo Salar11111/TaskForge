@@ -9,7 +9,7 @@ describe('lib/colors — static Tailwind token parity', () => {
     it(`${name}: every token is a literal, parseable class string`, () => {
       const c = colorMap[name];
       expect(c.dot).toBe(`bg-${name}-500`);
-      expect(c.badge).toBe(`bg-${name}-500/15 text-${name}-700 dark:text-${name}-300 border-${name}-500/30`);
+      expect(c.badge).toBe(`bg-${name}-500/15 text-${name}-800 dark:text-${name}-300 border-${name}-500/30`);
       expect(c.bar).toBe(`bg-${name}-500`);
       expect(c.ring).toBe(`ring-${name}-500/20`);
       expect(c.soft).toBe(`bg-${name}-500/10`);

@@ -26,12 +26,12 @@ export interface ColorTokens {
 }
 
 // NOTE: class names are string literals on purpose. Tailwind only generates
-// CSS for classes it sees as literal source; interpolating a color name into
-// a class (like "bg-" + color + "-500") ends up unstyled at runtime.
+// CSS for classes it sees as literal source, so dynamic class construction
+// (like 'bg-' + color + '-500') ends up unstyled at runtime.
 export const colorMap: Record<ColorName, ColorTokens> = {
   emerald: {
     dot: 'bg-emerald-500',
-    badge: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+    badge: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
     bar: 'bg-emerald-500',
     ring: 'ring-emerald-500/20',
     soft: 'bg-emerald-500/10',
@@ -45,7 +45,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   violet: {
     dot: 'bg-violet-500',
-    badge: 'bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30',
+    badge: 'bg-violet-500/15 text-violet-800 dark:text-violet-300 border-violet-500/30',
     bar: 'bg-violet-500',
     ring: 'ring-violet-500/20',
     soft: 'bg-violet-500/10',
@@ -59,7 +59,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   amber: {
     dot: 'bg-amber-500',
-    badge: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
+    badge: 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30',
     bar: 'bg-amber-500',
     ring: 'ring-amber-500/20',
     soft: 'bg-amber-500/10',
@@ -73,7 +73,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   rose: {
     dot: 'bg-rose-500',
-    badge: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
+    badge: 'bg-rose-500/15 text-rose-800 dark:text-rose-300 border-rose-500/30',
     bar: 'bg-rose-500',
     ring: 'ring-rose-500/20',
     soft: 'bg-rose-500/10',
@@ -87,7 +87,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   cyan: {
     dot: 'bg-cyan-500',
-    badge: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+    badge: 'bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border-cyan-500/30',
     bar: 'bg-cyan-500',
     ring: 'ring-cyan-500/20',
     soft: 'bg-cyan-500/10',
@@ -101,7 +101,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   orange: {
     dot: 'bg-orange-500',
-    badge: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30',
+    badge: 'bg-orange-500/15 text-orange-800 dark:text-orange-300 border-orange-500/30',
     bar: 'bg-orange-500',
     ring: 'ring-orange-500/20',
     soft: 'bg-orange-500/10',
@@ -115,7 +115,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   teal: {
     dot: 'bg-teal-500',
-    badge: 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30',
+    badge: 'bg-teal-500/15 text-teal-800 dark:text-teal-300 border-teal-500/30',
     bar: 'bg-teal-500',
     ring: 'ring-teal-500/20',
     soft: 'bg-teal-500/10',
@@ -129,7 +129,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   pink: {
     dot: 'bg-pink-500',
-    badge: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/30',
+    badge: 'bg-pink-500/15 text-pink-800 dark:text-pink-300 border-pink-500/30',
     bar: 'bg-pink-500',
     ring: 'ring-pink-500/20',
     soft: 'bg-pink-500/10',
@@ -143,7 +143,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   sky: {
     dot: 'bg-sky-500',
-    badge: 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30',
+    badge: 'bg-sky-500/15 text-sky-800 dark:text-sky-300 border-sky-500/30',
     bar: 'bg-sky-500',
     ring: 'ring-sky-500/20',
     soft: 'bg-sky-500/10',
@@ -157,7 +157,7 @@ export const colorMap: Record<ColorName, ColorTokens> = {
   },
   slate: {
     dot: 'bg-slate-500',
-    badge: 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30',
+    badge: 'bg-slate-500/15 text-slate-800 dark:text-slate-300 border-slate-500/30',
     bar: 'bg-slate-500',
     ring: 'ring-slate-500/20',
     soft: 'bg-slate-500/10',
