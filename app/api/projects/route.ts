@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
+import { requireWorkspace } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const { searchParams } = new URL(request.url);
     const stats = searchParams.get('stats') === 'true';
 
     const projects = await prisma.project.findMany({
+      where: { workspaceId: ctx.workspace.id },
       include: {
         _count: {
           select: { tasks: true },
@@ -64,29 +68,18 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(projectsWithMembers);
   } catch (error) {
-    console.error('Error fetching projects:', error);
-    return NextResponse.json({ message: 'Failed to fetch projects' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to fetch projects');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const body = await request.json();
     const validated = projectSchema.parse(body);
 
-    let workspaceId = (body as { workspaceId?: string }).workspaceId;
-    if (!workspaceId) {
-      const ws = await prisma.workspace.findFirst();
-      if (!ws) {
-        const created = await prisma.workspace.create({ data: { name: 'Default', slug: 'default' } });
-        workspaceId = created.id;
-      } else {
-        workspaceId = ws.id;
-      }
-    }
-
     const project = await prisma.project.create({
-      data: { ...validated, workspaceId },
+      data: { ...validated, workspaceId: ctx.workspace.id },
       include: {
         _count: { select: { tasks: true } },
       },
@@ -94,10 +87,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
-    console.error('Error creating project:', error);
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ message: 'Invalid input', errors: error }, { status: 400 });
-    }
-    return NextResponse.json({ message: 'Failed to create project' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to create project');
   }
 }

@@ -1,22 +1,78 @@
+import type { Workspace, WorkspaceMember } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { WorkspaceError } from '@/lib/api-error';
+
+export { WorkspaceError };
+
+export type Session = typeof auth.$Infer.Session;
+
+export interface WorkspaceContext {
+  session: Session;
+  membership: WorkspaceMember;
+  workspace: Workspace;
+}
 
 export async function getSession(headers: Headers) {
   return auth.api.getSession({ headers });
 }
 
+/**
+ * Resolve the caller's default workspace context.
+ *
+ * Every user has a "default workspace": their first workspace, or the one
+ * selected via the `x-workspace-id` header if they are a member of it.
+ * Returns null when there is no session, and a context with a null
+ * `workspace` when the user has no workspace yet.
+ */
+export async function getWorkspaceContext(request: Request): Promise<
+  | { session: Session; membership: WorkspaceMember | null; workspace: Workspace | null }
+  | null
+> {
+  const headers = new Headers(request.headers);
+  const session = await getSession(headers);
+  if (!session) return null;
+
+  const memberships = await prisma.workspaceMember.findMany({
+    where: { userId: session.user.id },
+    include: { workspace: { select: { id: true, name: true, slug: true, createdAt: true, updatedAt: true } } },
+    orderBy: [{ workspace: { createdAt: 'asc' } }, { createdAt: 'asc' }],
+  });
+
+  const headerId = headers.get('x-workspace-id');
+  const membership =
+    memberships.find((m) => m.workspace.id === headerId) ?? memberships[0] ?? null;
+
+  return { session, membership, workspace: membership?.workspace ?? null };
+}
+
+/**
+ * Require a signed-in caller and a default workspace. Throws a 401 when
+ * anonymous, a 403 when the user belongs to no workspace.
+ */
+export async function requireWorkspace(request: Request): Promise<WorkspaceContext> {
+  const ctx = await getWorkspaceContext(request);
+  if (!ctx) throw new WorkspaceError(401, 'Unauthorized');
+  if (!ctx.membership || !ctx.workspace) {
+    throw new WorkspaceError(403, 'You are not a member of any workspace');
+  }
+  return ctx as WorkspaceContext;
+}
+
 export async function requireSession(headers: Headers) {
   const session = await getSession(headers);
-  if (!session) throw new Response('Unauthorized', { status: 401 });
+  if (!session) throw new WorkspaceError(401, 'Unauthorized');
   return session;
 }
 
-export async function requireWorkspaceRole(userId: string, workspaceId: string, minRole: 'MEMBER' | 'ADMIN' | 'OWNER') {
-  const m = await prisma.workspaceMember.findUnique({
-    where: { userId_workspaceId: { userId, workspaceId } },
-  });
-  if (!m) throw new Response('Forbidden', { status: 403 });
+export async function requireWorkspaceRole(
+  ctx: WorkspaceContext,
+  minRole: 'MEMBER' | 'ADMIN' | 'OWNER'
+) {
   const rank = { MEMBER: 1, ADMIN: 2, OWNER: 3 } as const;
-  if (rank[m.role as keyof typeof rank] < rank[minRole]) throw new Response('Forbidden', { status: 403 });
-  return m;
+  const role = ctx.membership.role as keyof typeof rank;
+  if (rank[role] < rank[minRole]) {
+    throw new WorkspaceError(403, 'Insufficient permissions');
+  }
+  return ctx.membership;
 }

@@ -1,6 +1,14 @@
 import { NextRequest } from 'next/server';
+import { requireWorkspace } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
+  try {
+    await requireWorkspace(request);
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();

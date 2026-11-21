@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireWorkspace } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
 const startOfDay = (date: Date) => {
   const next = new Date(date);
@@ -13,29 +15,31 @@ const addDays = (date: Date, amount: number) => {
   return next;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
+    const today = startOfDay(new Date());
+    const where = { project: { workspaceId: ctx.workspace.id } };
     const [totalTasks, statusBreakdown, priorityBreakdown, projects, overdueTasks, upcomingTasks] = await Promise.all([
-      prisma.task.count(),
-      prisma.task.groupBy({ by: ['status'], _count: { status: true } }),
-      prisma.task.groupBy({ by: ['priority'], _count: { priority: true } }),
+      prisma.task.count({ where }),
+      prisma.task.groupBy({ by: ['status'], where, _count: { status: true } }),
+      prisma.task.groupBy({ by: ['priority'], where, _count: { priority: true } }),
       prisma.project.findMany({
+        where: { workspaceId: ctx.workspace.id },
         include: {
           _count: { select: { tasks: true } },
           tasks: { select: { status: true } },
         },
       }),
       prisma.task.count({
-        where: {
-          dueDate: { lt: startOfDay(new Date()) },
-          status: { not: 'DONE' },
-        },
+        where: { ...where, dueDate: { lt: today }, status: { not: 'DONE' } },
       }),
       prisma.task.findMany({
         where: {
+          ...where,
           dueDate: {
-            gte: startOfDay(new Date()),
-            lte: addDays(startOfDay(new Date()), 7),
+            gte: today,
+            lte: addDays(today, 7),
           },
           status: { not: 'DONE' },
         },
@@ -85,12 +89,11 @@ export async function GET() {
         priority: task.priority,
         status: task.status,
         dueDate: task.dueDate,
-        overdue: false,
+        overdue: new Date(task.dueDate!) < today,
         assignee: task.assignee,
       })),
     });
   } catch (error) {
-    console.error('Error fetching stats:', error);
-    return NextResponse.json({ message: 'Failed to fetch stats' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to fetch stats');
   }
 }

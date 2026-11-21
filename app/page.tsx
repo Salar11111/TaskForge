@@ -1,20 +1,17 @@
-﻿'use client';
+﻿import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import ClientShell from './client-shell';
 
-import { useAppStore } from '@/lib/store';
-import { Dashboard } from '@/components/dashboard';
-import { ProjectsView } from '@/components/projects-view';
-import { BoardView } from '@/components/board-view';
-import { TeamView } from '@/components/team-view';
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect('/login');
 
-export default function Home() {
-  const { view } = useAppStore();
+  const membership = await prisma.workspaceMember.findFirst({
+    where: { userId: session.user.id },
+  });
+  if (!membership) redirect('/setup');
 
-  return (
-    <>
-      {view === 'dashboard' && <Dashboard />}
-      {view === 'projects' && <ProjectsView />}
-      {view === 'board' && <BoardView />}
-      {view === 'team' && <TeamView />}
-    </>
-  );
+  return <ClientShell />;
 }

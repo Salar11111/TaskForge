@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { memberSchema } from '@/lib/validations';
+import { requireWorkspace } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const members = await prisma.member.findMany({
+      where: { workspaceId: ctx.workspace.id },
       include: {
         _count: {
           select: { tasks: true },
@@ -36,18 +40,18 @@ export async function GET() {
 
     return NextResponse.json(membersWithBreakdown);
   } catch (error) {
-    console.error('Error fetching members:', error);
-    return NextResponse.json({ message: 'Failed to fetch members' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to fetch members');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const body = await request.json();
     const validated = memberSchema.parse(body);
 
     const member = await prisma.member.create({
-      data: validated,
+      data: { ...validated, workspaceId: ctx.workspace.id },
       include: {
         _count: { select: { tasks: true } },
       },
@@ -55,10 +59,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error('Error creating member:', error);
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ message: 'Invalid input', errors: error }, { status: 400 });
-    }
-    return NextResponse.json({ message: 'Failed to create member' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to create member');
   }
 }

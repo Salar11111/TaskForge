@@ -8,14 +8,18 @@ datasource db {
 }
 
 model Member {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  avatar    String?
-  color     String   @default("emerald")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tasks     Task[]   @relation("MemberTasks")
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  avatar      String?
+  color       String       @default("emerald")
+  workspaceId String?
+  workspace   Workspace?   @relation("MemberTeam", fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tasks       Task[]       @relation("MemberTasks")
+
+  @@index([workspaceId])
 }
 
 model Project {
@@ -126,7 +130,8 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members  WorkspaceMember[]
+  members  Member[]    @relation("MemberTeam")
+  workspaceMembers WorkspaceMember[]
   projects Project[]
 }
 

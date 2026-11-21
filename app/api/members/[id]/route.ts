@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { memberSchema } from '@/lib/validations';
+import { requireWorkspace } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ctx = await requireWorkspace(request);
     const { id } = await params;
-    const member = await prisma.member.findUnique({
-      where: { id },
+    const member = await prisma.member.findFirst({
+      where: { id, workspaceId: ctx.workspace.id },
       include: {
         _count: { select: { tasks: true } },
         tasks: {
@@ -38,8 +41,7 @@ export async function GET(
       tasksByStatus: statusCounts,
     });
   } catch (error) {
-    console.error('Error fetching member:', error);
-    return NextResponse.json({ message: 'Failed to fetch member' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to fetch member');
   }
 }
 
@@ -48,12 +50,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ctx = await requireWorkspace(request);
     const { id } = await params;
     const body = await request.json();
     const validated = memberSchema.partial().parse(body);
 
     const member = await prisma.member.update({
-      where: { id },
+      where: { id, workspaceId: ctx.workspace.id },
       data: validated,
       include: {
         _count: { select: { tasks: true } },
@@ -62,11 +65,7 @@ export async function PATCH(
 
     return NextResponse.json(member);
   } catch (error) {
-    console.error('Error updating member:', error);
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ message: 'Invalid input', errors: error }, { status: 400 });
-    }
-    return NextResponse.json({ message: 'Failed to update member' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to update member');
   }
 }
 
@@ -75,11 +74,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ctx = await requireWorkspace(request);
     const { id } = await params;
-    await prisma.member.delete({ where: { id } });
+    const deleted = await prisma.member.deleteMany({ where: { id, workspaceId: ctx.workspace.id } });
+    if (deleted.count === 0) {
+      return NextResponse.json({ message: 'Member not found' }, { status: 404 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting member:', error);
-    return NextResponse.json({ message: 'Failed to delete member' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to delete member');
   }
 }

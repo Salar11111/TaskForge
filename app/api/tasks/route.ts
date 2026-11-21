@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { taskSchema } from '@/lib/validations';
+import { requireWorkspace, WorkspaceError } from '@/lib/authz';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
 
-    const where = projectId ? { projectId } : {};
+    const where = {
+      ...(projectId ? { projectId } : {}),
+      project: { workspaceId: ctx.workspace.id },
+    };
 
     const tasks = await prisma.task.findMany({
       where,
@@ -24,15 +30,31 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
-    return NextResponse.json({ message: 'Failed to fetch tasks' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to fetch tasks');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await requireWorkspace(request);
     const body = await request.json();
     const validated = taskSchema.parse(body);
+
+    const project = await prisma.project.findUnique({
+      where: { id: validated.projectId, workspaceId: ctx.workspace.id },
+    });
+    if (!project) {
+      throw new WorkspaceError(404, 'Project not found');
+    }
+
+    if (validated.assigneeId) {
+      const member = await prisma.member.findUnique({
+        where: { id: validated.assigneeId },
+      });
+      if (!member || member.workspaceId !== ctx.workspace.id) {
+        throw new WorkspaceError(400, 'Assignee is not a member of this workspace');
+      }
+    }
 
     const maxOrder = await prisma.task.aggregate({
       where: { projectId: validated.projectId, status: validated.status },
@@ -57,10 +79,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    console.error('Error creating task:', error);
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ message: 'Invalid input', errors: error }, { status: 400 });
-    }
-    return NextResponse.json({ message: 'Failed to create task' }, { status: 500 });
+    return apiErrorResponse(error, 'Failed to create task');
   }
 }
