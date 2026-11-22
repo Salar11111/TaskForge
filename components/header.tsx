@@ -8,6 +8,7 @@ import { MobileSidebar } from '@/components/mobile-sidebar';
 import { useTheme } from 'next-themes';
 import { useAppStore } from '@/lib/store';
 import { MemberAvatar } from '@/components/member-avatar';
+import { NotificationCenter } from '@/components/notification-center';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const viewConfig = {
@@ -79,6 +80,8 @@ export function Header() {
               <DropdownMenuItem onClick={() => setUserDialogOpen(true)}>New Member</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <NotificationCenter />
 
           <Button
             variant="ghost"

@@ -4,6 +4,7 @@ import { taskSchema } from '@/lib/validations';
 import { requireWorkspace, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
+import { notifyAssignee } from '@/lib/notifications';
 
 const taskIncludes = {
   assignee: {
@@ -77,6 +78,7 @@ export async function PATCH(
       include: taskIncludes,
     });
 
+    await notifyAssignee(validated.assigneeId, ctx.session.user.id, task.id, task.title, ctx.workspace.id);
     await prisma.activityLog.create({
       data: { action: 'updated task', meta: Object.keys(validated).join(', '), taskId: id, actorId: ctx.session.user.id },
     });

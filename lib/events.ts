@@ -13,7 +13,8 @@ export type AppEventType =
   | 'project.deleted'
   | 'user.created'
   | 'user.updated'
-  | 'user.deleted';
+  | 'user.deleted'
+  | 'notification.created';
 
 export interface AppEvent {
   type: AppEventType;

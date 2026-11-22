@@ -21,6 +21,10 @@
     all: ['labels'] as const,
     list: () => ['labels', 'list'] as const,
   },
+  notifications: {
+    all: ['notifications'] as const,
+    list: () => ['notifications', 'list'] as const,
+  },
   comments: (taskId: string) => ['comments', taskId] as const,
   activity: (taskId: string) => ['activity', taskId] as const,
   attachments: (taskId: string) => ['attachments', taskId] as const,

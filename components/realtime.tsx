@@ -22,6 +22,7 @@ export function Realtime() {
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       } catch {
         // Ignore malformed frames.
       }

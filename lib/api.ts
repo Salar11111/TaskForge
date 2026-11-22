@@ -52,6 +52,15 @@ export interface Label {
   _count?: { tasks: number };
 }
 
+export interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  taskId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -171,6 +180,13 @@ export const commentApi = {
 
 export const activityApi = {
   list: (taskId: string) => request<Activity[]>(`/tasks/${taskId}/activity`),
+};
+
+export const notificationApi = {
+  list: () => request<Notification[]>('/notifications'),
+  markRead: (id: string) => request<void>(`/notifications/${id}`, { method: 'PATCH', body: JSON.stringify({ read: true }) }),
+  markAllRead: () => request<void>('/notifications/read-all', { method: 'POST' }),
+  delete: (id: string) => request<void>(`/notifications/${id}`, { method: 'DELETE' }),
 };
 
 export const labelApi = {

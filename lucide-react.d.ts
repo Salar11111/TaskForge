@@ -16,6 +16,7 @@ declare module 'lucide-react' {
   export type LucideIcon = ComponentType<LucideIconProps>;
 
   export const AlertCircle: LucideIcon;
+  export const Bell: LucideIcon;
   export const Check: LucideIcon;
   export const CheckCircle2: LucideIcon;
   export const ChevronDown: LucideIcon;

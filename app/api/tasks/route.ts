@@ -5,6 +5,7 @@ import { requireWorkspace, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
 import { parsePagination } from '@/lib/pagination';
+import { notifyAssignee } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await notifyAssignee(validated.assigneeId, ctx.session.user.id, task.id, task.title, ctx.workspace.id);
     publish('task.created', ctx.workspace.id);
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
