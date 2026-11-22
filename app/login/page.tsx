@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Check, Kanban } from 'lucide-react';
 import LoginForm from './login-form';
-import './login.css';
+import '../auth.css';
 
 export default async function LoginPage() {
   const session = await auth.api.getSession({ headers: await headers() });

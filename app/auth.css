@@ -1,4 +1,14 @@
-/* Sign-in page — one emerald/teal system, real product UI, quiet motion. */
+/* Shared auth-page system — emerald/teal, real product UI, quiet motion. */
+
+.auth-shell-single {
+  grid-template-columns: minmax(0, 1fr) !important;
+  background:
+    radial-gradient(60% 55% at 88% -5%, rgb(16 185 129 / 0.12), transparent 70%),
+    radial-gradient(55% 55% at 0% 105%, rgb(8 145 178 / 0.12), transparent 70%),
+    var(--background);
+}
+
+.auth-shell-single .auth-orb { opacity: 0.32; }
 
 .auth-shell {
   position: relative;
