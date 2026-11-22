@@ -33,6 +33,7 @@ It is built as a small, readable codebase — no monorepo, no microservices — 
 - 👥 **Team workload** — capacity bars, per-member task stats and quick member management.
 - ⌘️ **Command palette** — `Ctrl/Cmd + K` to jump between views or create a task.
 - 🔄 **Live updates** — workspace-scoped SSE events keep every open tab in sync.
+- 🎬 **Animated handoff** — signing in or creating a workspace plays a circular reveal from the button and a branded welcome curtain as the app opens.
 
 ---
 
@@ -86,7 +87,7 @@ Sign in with the seeded admin:
 | Data | Prisma 5 + SQLite |
 | Auth | better-auth (email/password, cookie sessions) |
 | State | TanStack Query 5 (server data), Zustand (UI state) |
-| Interactions | dnd-kit, Recharts, sonner toasts |
+| Interactions | dnd-kit, Recharts, sonner toasts, CSS view-transition-style animations |
 | Testing | Vitest, Playwright, Lighthouse |
 
 ---
@@ -98,6 +99,7 @@ app/
   api/                 # route handlers (auth, tasks, projects, users, labels, sprints, …)
   login/ signup/ setup/ settings/   # auth & onboarding pages
   client-shell.tsx     # mounts views, dialogs, palette, detail drawer and SSE listener
+  auth.css intro.css   # auth-page system + post-login welcome curtain
 components/            # feature views + reusable UI primitives
 lib/                   # auth, authz, errors, API client, query keys, store, events
 prisma/                # schema and idempotent-ish demo seed
@@ -138,7 +140,9 @@ List endpoints accept `?limit=` (1–500) and `?offset=`, and return the unpagin
 
 ## 📱 Responsive by design
 
-The whole app was audited at **320, 360, 390, 768, 820, 1024, 1280 and 1440px** with zero horizontal overflow. Board columns scroll inside their own container, charts wrap their legends, and dialogs, the detail drawer and the mobile navigation drawer all stay within the viewport. Motion respects `prefers-reduced-motion`.
+The whole app was audited at **320, 360, 390, 768, 820, 1024, 1280 and 1440px** with zero horizontal overflow. Board columns scroll inside their own container, charts wrap their legends, and dialogs, the detail drawer and the mobile navigation drawer all stay within the viewport.
+
+The sign-in handoff uses a CSS circular reveal and welcome curtain rather than the native View Transitions API, because the auth forms perform full-page navigations where native transitions are Chromium-only. With `prefers-reduced-motion: reduce`, both animations are skipped and navigation is immediate.
 
 ---
 

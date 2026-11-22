@@ -7,6 +7,9 @@ node_modules/
 coverage/
 test-results/
 playwright-report/
+playwright/.cache/
+
+# note: docs/screenshots/ is intentional project documentation and is tracked
 
 # next.js
 .next/
