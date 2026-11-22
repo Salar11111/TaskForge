@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json([...reminders, ...persisted].slice(0, 50));
+    const reminderTaskIds = new Set(reminders.map((r) => r.taskId));
+    const uniquePersisted = persisted.filter((n) => !n.taskId || !reminderTaskIds.has(n.taskId));
+    return NextResponse.json([...reminders, ...uniquePersisted].slice(0, 50));
   } catch (error) {
     return apiErrorResponse(error, 'Failed to fetch notifications');
   }

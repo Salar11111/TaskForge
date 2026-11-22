@@ -29,6 +29,8 @@ export function RoadmapView() {
     queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
   };
 
+  const datesValid = !!start && !!end && !Number.isNaN(new Date(start).getTime()) && !Number.isNaN(new Date(end).getTime()) && new Date(end) >= new Date(start);
+
   const create = useMutation({
     mutationFn: () => sprintApi.create({
       name,
@@ -68,7 +70,7 @@ export function RoadmapView() {
             <Input aria-label='Sprint goal' placeholder='Goal (optional)' value={goal} onChange={(e) => setGoal(e.target.value)} />
             <Input aria-label='Start date' type='date' value={start} onChange={(e) => setStart(e.target.value)} />
             <Input aria-label='End date' type='date' value={end} onChange={(e) => setEnd(e.target.value)} />
-            <Button variant='outline' disabled={!name || !start || !end || create.isPending} onClick={() => create.mutate()}>Create</Button>
+            <Button variant='outline' disabled={!name || !datesValid || create.isPending} onClick={() => create.mutate()}>Create</Button>
           </CardContent>
         </Card>
       )}

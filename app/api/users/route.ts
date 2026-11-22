@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { userSchema } from '@/lib/validations';
-import { requireWorkspace } from '@/lib/authz';
+import { requireWorkspace, requireWorkspaceRole } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
 import { parsePagination } from '@/lib/pagination';
@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     ]);
 
     const assigned = await prisma.task.findMany({
-      where: { assigneeId: { in: users.map((u) => u.id) }, deletedAt: null },
+      where: {
+        assigneeId: { in: users.map((u) => u.id) },
+        deletedAt: null,
+        project: { workspaceId: ctx.workspace.id },
+      },
       select: { assigneeId: true, priority: true },
     });
 
@@ -43,12 +47,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const body = await request.json();
     const validated = userSchema.parse(body);
 
-    const user = await prisma.user.create({ data: validated });
-    await prisma.workspaceMember.create({
-      data: { userId: user.id, workspaceId: ctx.workspace.id, role: 'MEMBER' },
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({ data: validated });
+      await tx.workspaceMember.create({
+        data: { userId: created.id, workspaceId: ctx.workspace.id, role: 'MEMBER' },
+      });
+      return created;
     });
 
     publish('user.created', ctx.workspace.id);

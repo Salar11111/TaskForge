@@ -68,17 +68,19 @@ function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, selected, onTog
             className='mt-1 h-6 w-6 shrink-0'
           />
         )}
-        <h3
-          className='font-medium text-sm leading-snug line-clamp-2 flex-1 cursor-pointer hover:underline'
+        <button
+          type='button'
+          className='text-left font-medium text-sm leading-snug line-clamp-2 flex-1 min-h-6 cursor-pointer hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
           onClick={onOpenDetail}
           title='Open task details'
+          aria-label={`Open details for ${task.title}`}
         >
           {task.title}
-        </h3>
+        </button>
         {!overlay && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='icon' aria-label={`Actions for ${task.title}`} className='h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
+              <Button variant='ghost' size='icon' aria-label={`Actions for ${task.title}`} className='h-6 w-6 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0'>
                 <MoreHorizontal className='h-3.5 w-3.5' />
               </Button>
             </DropdownMenuTrigger>
@@ -219,11 +221,21 @@ export function BoardView() {
     if (tasks) setLocalTasks(tasks);
   }, [tasks]);
 
+  // Stored filter/selection state must not leak across project switches.
+  useEffect(() => {
+    setSelectedIds([]);
+    setStatusFilter([]);
+    setPriorityFilter([]);
+    setAssigneeFilter('');
+    setLabelFilter([]);
+    setDueFilter('all');
+  }, [selectedProjectId]);
+
   // If the stored project no longer exists (deleted, or from a different
   // workspace), fall back to the first available project.
   useEffect(() => {
-    if (!selectedProjectId || !projects) return;
-    if (!projects.some((p) => p.id === selectedProjectId)) {
+    if (!projects?.length) return;
+    if (!selectedProjectId || !projects.some((p) => p.id === selectedProjectId)) {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId, setSelectedProjectId]);
@@ -307,6 +319,10 @@ export function BoardView() {
       return true;
     });
   }, [filteredTasks, statusFilter, priorityFilter, assigneeFilter, labelFilter, dueFilter]);
+
+  // Reordering a filtered subset would renumber only visible cards and corrupt
+  // stored order values, so drag-and-drop is disabled while filters are active.
+  const hasFilters = statusFilter.length > 0 || priorityFilter.length > 0 || !!assigneeFilter || labelFilter.length > 0 || dueFilter !== 'all' || !!searchQuery.trim();
 
   const groupedTasks = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
@@ -545,7 +561,9 @@ export function BoardView() {
         )}
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      {hasFilters && <p className='text-xs text-muted-foreground'>Clear filters to reorder tasks by dragging.</p>}
+
+      <DndContext sensors={hasFilters ? [] : sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         <div className='flex gap-4 overflow-x-auto pb-4'>
           {STATUSES.map((status) => (
             <Column

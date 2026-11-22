@@ -7,7 +7,9 @@ import { z } from 'zod';
 
 const attachmentSchema = z.object({
   name: z.string().min(1).max(200),
-  url: z.string().url(),
+  url: z.string().url().refine((v) => ['http:', 'https:'].includes(new URL(v).protocol), {
+    message: 'Only http and https URLs are allowed',
+  }),
   size: z.number().int().nonnegative().optional(),
 });
 

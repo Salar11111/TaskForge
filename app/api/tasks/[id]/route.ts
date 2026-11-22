@@ -48,10 +48,20 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const validated = taskSchema.partial().parse(body);
-    const { labelIds, ...rest } = validated;
+    const { labelIds: rawLabelIds, ...rest } = validated;
+    const labelIds = rawLabelIds ? [...new Set(rawLabelIds)] : undefined;
+
+    // A task may only be moved between projects inside this workspace.
+    if (validated.projectId) {
+      const dest = await prisma.project.findUnique({
+        where: { id: validated.projectId, workspaceId: ctx.workspace.id },
+      });
+      if (!dest) throw new WorkspaceError(404, 'Project not found');
+    }
 
     const updateData = {
       ...rest,
+      ...(validated.assigneeId !== undefined ? { assigneeId: validated.assigneeId } : {}),
       dueDate: validated.dueDate ? new Date(validated.dueDate) : validated.dueDate === null ? null : undefined,
       ...(labelIds ? { labels: { deleteMany: {}, create: labelIds.map((labelId) => ({ labelId })) } } : {}),
     };
@@ -77,14 +87,21 @@ export async function PATCH(
       if (!sprint) throw new WorkspaceError(400, 'Unknown sprint');
     }
 
-    // `update` raises P2025 (mapped to 404) if the task isn't in this workspace.
+    const existing = await prisma.task.findFirst({
+      where: { id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
+      select: { assigneeId: true },
+    });
+    if (!existing) throw new WorkspaceError(404, 'Task not found');
+
     const task = await prisma.task.update({
       where: { id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
       data: updateData,
       include: taskIncludes,
     });
 
-    await notifyAssignee(validated.assigneeId, ctx.session.user.id, task.id, task.title, ctx.workspace.id);
+    if (validated.assigneeId !== undefined && validated.assigneeId !== existing.assigneeId) {
+      await notifyAssignee(validated.assigneeId, ctx.session.user.id, task.id, task.title, ctx.workspace.id);
+    }
     await prisma.activityLog.create({
       data: { action: 'updated task', meta: Object.keys(validated).join(', '), taskId: id, actorId: ctx.session.user.id },
     });

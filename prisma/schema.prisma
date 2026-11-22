@@ -17,6 +17,8 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   tasks       Task[]   @relation("ProjectTasks")
+
+  @@index([workspaceId])
 }
 
 model Task {
@@ -41,6 +43,7 @@ model Task {
   activity    ActivityLog[]
   attachments Attachment[]
   labels      TaskLabel[]
+  notifications Notification[]
 
   @@index([projectId, status, order])
   @@index([assigneeId])
@@ -74,6 +77,7 @@ model Notification {
   type      String
   message   String
   taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -114,6 +118,7 @@ model TaskLabel {
   label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
 
   @@id([taskId, labelId])
+  @@index([labelId])
 }
 
 model Comment {
@@ -121,8 +126,8 @@ model Comment {
   body      String
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

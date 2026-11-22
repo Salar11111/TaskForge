@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
       prisma.project.findMany({
         where: { workspaceId: ctx.workspace.id },
         include: {
-          _count: { select: { tasks: true } },
-          tasks: { select: { status: true } },
+          _count: { select: { tasks: { where: { deletedAt: null } } } },
+          tasks: { where: { deletedAt: null }, select: { status: true } },
         },
       }),
       prisma.task.count({

@@ -46,7 +46,7 @@ export function BarChart({ data, className }: BarChartProps) {
   }
 
   return (
-    <div className={cn('h-[220px] w-full', className)}>
+    <div className={cn('h-[220px] w-full', className)} aria-hidden='true' tabIndex={-1}>
       <ResponsiveContainer width='100%' height='100%'>
         <RechartsBarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="20%">
           <CartesianGrid

@@ -95,7 +95,7 @@ export function ProjectDialog({ isOpen, onClose, defaultValues }: { isOpen: bool
               value={dialogForm.watch('color') || 'emerald'}
               onValueChange={(value) => dialogForm.setValue('color', value as (typeof availableColors)[number], { shouldValidate: true })}
             >
-              <SelectTrigger>
+              <SelectTrigger id="color">
                 <SelectValue placeholder="Select color" />
               </SelectTrigger>
               <SelectContent>
@@ -164,7 +164,7 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
                 value={dialogForm.watch('status') || 'TODO'}
                 onValueChange={(value) => dialogForm.setValue('status', value as 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE', { shouldValidate: true })}
               >
-                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectTrigger id="status"><SelectValue placeholder="Select status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="TODO">To Do</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
@@ -179,7 +179,7 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
                 value={dialogForm.watch('priority') || 'MEDIUM'}
                 onValueChange={(value) => dialogForm.setValue('priority', value as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT', { shouldValidate: true })}
               >
-                <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
+                <SelectTrigger id="priority"><SelectValue placeholder="Select priority" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="LOW">Low</SelectItem>
                   <SelectItem value="MEDIUM">Medium</SelectItem>
@@ -195,7 +195,7 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
               value={dialogForm.watch('projectId') || projects[0]?.id || ''}
               onValueChange={(value) => dialogForm.setValue('projectId', value, { shouldValidate: true })}
             >
-              <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+              <SelectTrigger id="projectId"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
@@ -204,12 +204,12 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
           <div className="space-y-2">
             <Label htmlFor="sprintId">Sprint</Label>
             <Select
-              value={dialogForm.watch('sprintId') ?? ''}
-              onValueChange={(value) => dialogForm.setValue('sprintId', value || null, { shouldValidate: true })}
+              value={dialogForm.watch('sprintId') || '__none__'}
+              onValueChange={(value) => dialogForm.setValue('sprintId', value === '__none__' ? null : value, { shouldValidate: true })}
             >
-              <SelectTrigger><SelectValue placeholder="No sprint" /></SelectTrigger>
+              <SelectTrigger id="sprintId"><SelectValue placeholder="No sprint" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No sprint</SelectItem>
+                <SelectItem value="__none__">No sprint</SelectItem>
                 {sprints.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -218,12 +218,12 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
             <div className="space-y-2">
               <Label htmlFor="assigneeId">Assignee</Label>
               <Select
-                value={dialogForm.watch('assigneeId') ?? ''}
-                onValueChange={(value) => dialogForm.setValue('assigneeId', value || undefined, { shouldValidate: true })}
+                value={dialogForm.watch('assigneeId') || '__none__'}
+                onValueChange={(value) => dialogForm.setValue('assigneeId', value === '__none__' ? null : value, { shouldValidate: true })}
               >
-                <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                <SelectTrigger id="assigneeId"><SelectValue placeholder="Unassigned" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="__none__">Unassigned</SelectItem>
                   {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                 </SelectContent>
               </Select>

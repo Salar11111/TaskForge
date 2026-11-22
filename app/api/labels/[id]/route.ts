@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireWorkspace } from '@/lib/authz';
+import { requireWorkspace, requireWorkspaceRole } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 
@@ -12,6 +12,7 @@ const labelSchema = z.object({
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const { id } = await params;
     const data = labelSchema.parse(await request.json());
     const updated = await prisma.label.updateMany({ where: { id, workspaceId: ctx.workspace.id }, data });
@@ -25,6 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const { id } = await params;
     const deleted = await prisma.label.deleteMany({ where: { id, workspaceId: ctx.workspace.id } });
     if (deleted.count === 0) return NextResponse.json({ message: 'Label not found' }, { status: 404 });

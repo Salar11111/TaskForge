@@ -49,7 +49,7 @@ export function DonutChart({ data, total, unit = 'tasks', className }: DonutChar
 
   return (
     <div className={cn('flex items-center gap-4', className)}>
-      <div className='relative h-[180px] w-[180px] shrink-0'>
+      <div className='relative h-[180px] w-[180px] shrink-0' aria-hidden='true' tabIndex={-1}>
         <ResponsiveContainer width='100%' height='100%'>
           <PieChart>
             <Pie
@@ -62,6 +62,7 @@ export function DonutChart({ data, total, unit = 'tasks', className }: DonutChar
               dataKey='value'
               nameKey='name'
               stroke='none'
+              rootTabIndex={-1}
             >
               {filteredData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

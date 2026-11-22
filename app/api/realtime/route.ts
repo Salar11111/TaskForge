@@ -5,6 +5,7 @@ import { subscribe } from '@/lib/events';
 
 export async function GET(request: NextRequest) {
   let unsubscribe: (() => void) | undefined;
+  let closeStream: (() => void) | undefined;
 
   try {
     const ctx = await requireWorkspace(request);
@@ -29,14 +30,14 @@ export async function GET(request: NextRequest) {
           unsubscribe?.();
           unsubscribe = undefined;
         };
+        closeStream = close;
         request.signal.addEventListener('abort', close);
         request.signal.addEventListener('abort', () => {
           try { controller.close(); } catch { /* already closed */ }
         });
       },
       cancel() {
-        unsubscribe?.();
-        unsubscribe = undefined;
+        closeStream?.();
       },
     });
 

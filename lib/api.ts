@@ -26,7 +26,7 @@ export interface Comment {
   body: string;
   taskId: string;
   createdAt: string;
-  author: { id: string; name: string; image: string | null; color: string };
+  author: { id: string; name: string; image: string | null; color: string } | null;
 }
 
 export interface Activity {
@@ -135,13 +135,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   // In server contexts (e.g. Server Components), `fetch` needs an absolute URL.
   const base = typeof window === 'undefined' ? process.env.NEXT_PUBLIC_APP_URL || '' : '';
   const activeWorkspaceId = useAppStore.getState().activeWorkspaceId;
+  const { headers: extraHeaders, ...rest } = options;
   const response = await fetch(`${base}${API_BASE}${endpoint}`, {
+    ...rest,
     headers: {
       'Content-Type': 'application/json',
       ...(activeWorkspaceId ? { 'x-workspace-id': activeWorkspaceId } : {}),
-      ...options.headers,
+      ...extraHeaders,
     },
-    ...options,
   });
 
   if (!response.ok) {

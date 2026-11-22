@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ClientShell from './client-shell';
+import { AppChrome } from '@/components/app-chrome';
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -13,5 +14,5 @@ export default async function Home() {
   });
   if (!membership) redirect('/setup');
 
-  return <ClientShell />;
+  return <AppChrome><ClientShell /></AppChrome>;
 }

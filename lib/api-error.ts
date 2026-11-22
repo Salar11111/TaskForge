@@ -46,7 +46,9 @@ function prismaStatus(error: Error): number | null {
 }
 
 export function apiErrorResponse(error: unknown, message = 'Internal server error') {
-  console.error('API error:', error);
+  // Expected 4xx inputs are routine; only log unexpected errors with a stack.
+  const expected = error instanceof WorkspaceError || error instanceof ZodError || error instanceof SyntaxError || prismaStatus(error as Error) !== null;
+  if (!expected) console.error('API error:', error);
 
   if (error instanceof WorkspaceError) {
     return NextResponse.json({ message: error.message }, { status: error.status });

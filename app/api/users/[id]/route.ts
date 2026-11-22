@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { userSchema } from '@/lib/validations';
-import { requireWorkspace } from '@/lib/authz';
+import { requireWorkspace, requireWorkspaceRole, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
 
@@ -29,6 +29,7 @@ export async function PATCH(
 ) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const { id } = await params;
     const body = await request.json();
     const validated = userSchema.partial().parse(body);
@@ -56,7 +57,20 @@ export async function DELETE(
 ) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const { id } = await params;
+
+    // Never remove the last owner of a workspace.
+    const targetMembership = await prisma.workspaceMember.findFirst({
+      where: { userId: id, workspaceId: ctx.workspace.id },
+    });
+    if (targetMembership?.role === 'OWNER') {
+      const ownerCount = await prisma.workspaceMember.count({
+        where: { workspaceId: ctx.workspace.id, role: 'OWNER' },
+      });
+      if (ownerCount <= 1) throw new WorkspaceError(400, 'Cannot remove the last workspace owner');
+    }
+
     const deleted = await prisma.user.deleteMany({
       where: { id, memberships: { some: { workspaceId: ctx.workspace.id } } },
     });

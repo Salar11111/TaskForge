@@ -23,6 +23,12 @@ export function Realtime() {
         queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.labels.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.trash.all });
+        queryClient.invalidateQueries({ queryKey: ['comments'] });
+        queryClient.invalidateQueries({ queryKey: ['activity'] });
+        queryClient.invalidateQueries({ queryKey: ['attachments'] });
       } catch {
         // Ignore malformed frames.
       }

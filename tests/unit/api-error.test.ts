@@ -66,7 +66,9 @@ describe('rateLimit', () => {
 
 describe('ipFromRequest', () => {
   it('extracts the client IP from forwarding headers, else anonymous', () => {
-    expect(ipFromRequest(new Request('http://x/', { headers: { 'x-forwarded-for': '1.2.3.4, 5.6.7.8' } }))).toBe('1.2.3.4');
+    // The right-most hop is appended by the trusted proxy and cannot be
+    // spoofed by the client; the left-most value is client-controlled.
+    expect(ipFromRequest(new Request('http://x/', { headers: { 'x-forwarded-for': '1.2.3.4, 5.6.7.8' } }))).toBe('5.6.7.8');
     expect(ipFromRequest(new Request('http://x/', { headers: { 'x-real-ip': '9.9.9.9' } }))).toBe('9.9.9.9');
     expect(ipFromRequest(new Request('http://x/'))).toBe('anonymous');
   });

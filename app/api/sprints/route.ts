@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       orderBy: { startDate: 'desc' },
       include: {
         tasks: {
+          where: { deletedAt: null },
           select: { status: true, id: true },
         },
       },

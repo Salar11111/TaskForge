@@ -42,8 +42,11 @@ export async function getWorkspaceContext(request: Request): Promise<
   // EventSource cannot set custom headers, so also accept a query parameter.
   const queryWorkspaceId = new URL(request.url).searchParams.get('workspaceId');
   const requestedId = headers.get('x-workspace-id') ?? queryWorkspaceId;
-  const membership =
-    memberships.find((m) => m.workspace.id === requestedId) ?? memberships[0] ?? null;
+  const match = requestedId ? memberships.find((m) => m.workspace.id === requestedId) : undefined;
+  if (requestedId && !match) {
+    throw new WorkspaceError(403, 'Not a member of the requested workspace');
+  }
+  const membership = match ?? memberships[0] ?? null;
 
   return { session, membership, workspace: membership?.workspace ?? null };
 }

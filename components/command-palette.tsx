@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Search, Plus, LayoutDashboard, FolderKanban, Users, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Search, Plus, LayoutDashboard, FolderKanban, Users, Settings, Milestone } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +26,7 @@ export function CommandPalette() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Command palette</DialogTitle>
         <Command className="rounded-lg border shadow-md">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -45,6 +46,9 @@ export function CommandPalette() {
               </Command.Item>
               <Command.Item onSelect={() => { setView('team'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
                 <Users className="h-4 w-4" /> Team
+              </Command.Item>
+              <Command.Item onSelect={() => { setView('roadmap'); setOpen(false); }} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+                <Milestone className="h-4 w-4" /> Roadmap
               </Command.Item>
             </Command.Group>
             <Command.Group heading="Actions">

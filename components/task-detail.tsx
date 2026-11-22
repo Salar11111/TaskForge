@@ -17,6 +17,16 @@ import { toast } from 'sonner';
 import { Send, Paperclip, Trash2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/** Only render http(s) links; never hand a javascript:/data: URL to an anchor. */
+function safeHref(url: string) {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '#';
+  } catch {
+    return '#';
+  }
+}
+
 export function TaskDetail() {
   const detailTaskId = useAppStore((s) => s.detailTaskId);
   const setDetailTaskId = useAppStore((s) => s.setDetailTaskId);
@@ -29,7 +39,7 @@ export function TaskDetail() {
   const [attName, setAttName] = useState('');
   const [attUrl, setAttUrl] = useState('');
 
-  const { data: task } = useQuery({ queryKey: ['task', taskId], queryFn: () => taskApi.get(taskId), enabled });
+  const { data: task } = useQuery({ queryKey: queryKeys.tasks.detail(taskId), queryFn: () => taskApi.get(taskId), enabled });
   const { data: comments } = useQuery({ queryKey: queryKeys.comments(taskId), queryFn: () => commentApi.list(taskId), enabled });
   const { data: activity } = useQuery({ queryKey: queryKeys.activity(taskId), queryFn: () => activityApi.list(taskId), enabled });
   const { data: attachments } = useQuery({ queryKey: queryKeys.attachments(taskId), queryFn: () => attachmentApi.list(taskId), enabled });
@@ -38,6 +48,7 @@ export function TaskDetail() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.comments(taskId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.activity(taskId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.attachments(taskId) });
@@ -94,10 +105,10 @@ export function TaskDetail() {
               <div className="space-y-3">
                 {(comments ?? []).map((c) => (
                   <div key={c.id} className="flex gap-2">
-                    <MemberAvatar name={c.author.name} avatar={c.author.image} color={c.author.color} size="sm" />
+                    <MemberAvatar name={c.author?.name ?? 'Former member'} avatar={c.author?.image} color={c.author?.color ?? 'slate'} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-medium">{c.author.name}</span>
+                        <span className="text-xs font-medium">{c.author?.name ?? 'Former member'}</span>
                         <span className="text-[0.65rem] text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm">{c.body}</p>
@@ -110,7 +121,7 @@ export function TaskDetail() {
                 className="flex gap-2"
                 onSubmit={(e) => { e.preventDefault(); if (comment.trim()) addComment.mutate(comment.trim()); }}
               >
-                <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write a comment..." />
+                <Input aria-label="Write a comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write a comment..." />
                 <Button type="submit" size="icon" disabled={!comment.trim() || addComment.isPending} aria-label="Add comment"><Send className="h-4 w-4" /></Button>
               </form>
             </section>
@@ -119,7 +130,7 @@ export function TaskDetail() {
               <h3 className="text-sm font-semibold">Attachments</h3>
               {(attachments ?? []).map((a) => (
                 <div key={a.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                  <a href={a.url} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-2 text-sm text-primary underline-offset-2 hover:underline">
+                  <a href={safeHref(a.url)} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-2 text-sm text-primary underline-offset-2 hover:underline">
                     <Paperclip className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">{a.name}</span>
                     <ExternalLink className="h-3 w-3 shrink-0" />
@@ -133,8 +144,8 @@ export function TaskDetail() {
                 className="grid grid-cols-[1fr_2fr_auto] gap-2"
                 onSubmit={(e) => { e.preventDefault(); if (attName.trim() && attUrl.trim()) addAttachment.mutate({ name: attName.trim(), url: attUrl.trim() }); }}
               >
-                <Input value={attName} onChange={(e) => setAttName(e.target.value)} placeholder="Name" />
-                <Input value={attUrl} onChange={(e) => setAttUrl(e.target.value)} placeholder="https://..." />
+                <Input aria-label="Attachment name" value={attName} onChange={(e) => setAttName(e.target.value)} placeholder="Name" />
+                <Input aria-label="Attachment URL" value={attUrl} onChange={(e) => setAttUrl(e.target.value)} placeholder="https://..." />
                 <Button type="submit" size="sm" disabled={!attName.trim() || !attUrl.trim() || addAttachment.isPending}>Add</Button>
               </form>
             </section>

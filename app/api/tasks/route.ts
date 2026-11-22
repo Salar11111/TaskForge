@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
     const ctx = await requireWorkspace(request);
     const body = await request.json();
     const validated = taskSchema.parse(body);
-    const { labelIds = [], ...taskData } = validated;
+    const { labelIds: rawLabelIds, ...taskData } = validated;
+    const labelIds = rawLabelIds ? [...new Set(rawLabelIds)] : [];
 
     const project = await prisma.project.findUnique({
       where: { id: validated.projectId, workspaceId: ctx.workspace.id },

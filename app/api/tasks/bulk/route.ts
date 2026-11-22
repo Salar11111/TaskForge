@@ -24,25 +24,26 @@ export async function PATCH(request: NextRequest) {
     }
 
     const where = { ...scope, id: { in: body.ids } };
+    let affected = 0;
     if (body.action === 'delete') {
-      await prisma.task.updateMany({
+      affected = (await prisma.task.updateMany({
         where: { ...where, deletedAt: null },
         data: { deletedAt: new Date() },
-      });
+      })).count;
     } else if (body.action === 'restore') {
-      await prisma.task.updateMany({
+      affected = (await prisma.task.updateMany({
         where: { ...where, deletedAt: { not: null } },
         data: { deletedAt: null },
-      });
+      })).count;
     } else {
-      await prisma.task.updateMany({
+      affected = (await prisma.task.updateMany({
         where: { ...where, deletedAt: null },
         data: { status: body.status },
-      });
+      })).count;
     }
 
     publish('task.updated', ctx.workspace.id);
-    return NextResponse.json({ success: true, affected: body.ids.length });
+    return NextResponse.json({ success: true, affected });
   } catch (error) {
     return apiErrorResponse(error, 'Failed to apply bulk action');
   }

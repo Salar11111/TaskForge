@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         where: { workspaceId: ctx.workspace.id },
       include: {
         _count: {
-          select: { tasks: true },
+          select: { tasks: { where: { deletedAt: null } } },
         },
         tasks: {
           where: { deletedAt: null },

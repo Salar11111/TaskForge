@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+﻿import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 
 test('sign up, onboard a workspace, and land on the dashboard', async ({ page }) => {

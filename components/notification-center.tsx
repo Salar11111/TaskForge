@@ -55,7 +55,7 @@ export function NotificationCenter() {
         {items.some((n) => !n.read && !n.id.startsWith('reminder-')) && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={async () => { await notificationApi.markAllRead(); refresh(); }}>
+            <DropdownMenuItem onSelect={async () => { await notificationApi.markAllRead().catch(() => {}); refresh(); }}>
               Mark all as read
             </DropdownMenuItem>
           </>

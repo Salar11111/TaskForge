@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
+    "pretest:e2e": "node scripts/materialize-specs.js",
     "test:e2e": "playwright test",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",

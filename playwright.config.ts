@@ -6,10 +6,10 @@ loadEnvConfig(process.cwd());
 export default defineConfig({
   testDir: 'tests/e2e',
   webServer: {
-    command: 'npm run db:push -- --skip-generate && npm run db:seed && npm run start',
+    command: 'npm run db:push -- --skip-generate && npm run db:seed && npm run build && npm run start',
     url: 'http://localhost:3100',
     reuseExistingServer: true,
-    timeout: 90_000,
+    timeout: 180_000,
     env: { PORT: '3100' },
   },
   use: {
@@ -18,5 +18,6 @@ export default defineConfig({
   },
   timeout: 30_000,
   fullyParallel: false,
+  workers: 1, // security.spec mutates shared DB state; keep specs isolated
   projects: [{ name: 'chromium' }],
 });

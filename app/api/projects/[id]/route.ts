@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
-import { requireWorkspace } from '@/lib/authz';
+import { requireWorkspace, requireWorkspaceRole } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
 import { publish } from '@/lib/events';
 
@@ -16,6 +16,7 @@ export async function GET(
       where: { id, workspaceId: ctx.workspace.id },
       include: {
         tasks: {
+          where: { deletedAt: null },
           include: {
             assignee: {
               select: { id: true, name: true, image: true, color: true },
@@ -23,7 +24,7 @@ export async function GET(
           },
           orderBy: [{ status: 'asc' }, { order: 'asc' }],
         },
-        _count: { select: { tasks: true } },
+        _count: { select: { tasks: { where: { deletedAt: null } } } },
       },
     });
 
@@ -68,6 +69,7 @@ export async function DELETE(
 ) {
   try {
     const ctx = await requireWorkspace(request);
+    await requireWorkspaceRole(ctx, 'ADMIN');
     const { id } = await params;
     await prisma.project.delete({ where: { id, workspaceId: ctx.workspace.id } });
     publish('project.deleted', ctx.workspace.id);

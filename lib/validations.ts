@@ -23,7 +23,7 @@ export const taskSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   projectId: z.string().min(1, 'Project is required'),
-  assigneeId: z.string().optional(),
+  assigneeId: z.string().nullable().optional(),
   dueDate: z.string().datetime().optional().nullable(),
   order: z.number().int().nonnegative().optional(),
   labelIds: z.array(z.string()).optional(),
@@ -32,18 +32,21 @@ export const taskSchema = z.object({
 
 export const taskReorderSchema = z.object({
   tasks: z.array(
+
     z.object({
       id: z.string(),
       status: z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
       order: z.number().int().nonnegative(),
     })
-  ),
+  ).max(500),
 });
 
 export const userSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   email: z.string().email('Invalid email address'),
-  image: z.string().url('Invalid avatar URL').optional().nullable().or(z.literal('')),
+  image: z.string().url('Invalid avatar URL')
+    .refine((v) => ['http:', 'https:'].includes(new URL(v).protocol), { message: 'Only http and https URLs are allowed' })
+    .optional().nullable().or(z.literal('')),
   color: z.enum([
     'emerald',
     'violet',

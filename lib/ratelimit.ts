@@ -18,8 +18,9 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   entry.count += 1;
   buckets.set(key, entry);
 
-  // Prune occasionally: drop buckets whose window has elapsed.
-  if (++pruneTick % 1000 === 0) {
+  // Prune occasionally (and when the map grows large) so spoofed keys cannot
+  // grow the bucket map without bound between periodic sweeps.
+  if (++pruneTick % 1000 === 0 || buckets.size > 10_000) {
     for (const [k, v] of buckets) {
       if (now >= v.resetAt) buckets.delete(k);
     }
@@ -30,7 +31,12 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
 
 export function ipFromRequest(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  if (forwarded) {
+    // A trusted proxy appends the source IP it sees, so the right-most entry is
+    // the one the client cannot control. The left-most entry is client-supplied.
+    const hops = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+    if (hops.length) return hops[hops.length - 1];
+  }
   const realIp = request.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
   return 'anonymous';
