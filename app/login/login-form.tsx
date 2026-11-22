@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, Kanban, Loader2 } from 'lucide-react';
+import { playAuthExit } from '@/lib/auth-transition';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -30,6 +31,7 @@ export default function LoginForm() {
         const data = (await response.json().catch(() => ({}))) as { message?: string; code?: string };
         setError(data.message || data.code || 'Invalid email or password');
       } else {
+        await playAuthExit(event.currentTarget, 'signin');
         window.location.assign('/');
       }
     } catch {
@@ -40,6 +42,7 @@ export default function LoginForm() {
   };
 
   return (
+    <>
     <div className='auth-card'>
       <div className='auth-mobile-brand'>
         <span className='auth-brand-mark'><Kanban className='h-5 w-5' aria-hidden='true' /></span>
@@ -95,5 +98,10 @@ export default function LoginForm() {
         New here? <Link href='/signup' className='auth-link'>Create an account</Link>
       </p>
     </div>
+
+    <div className='auth-exit-veil' aria-hidden='true'>
+      <span className='auth-veil-mark'><Kanban className='h-7 w-7' /></span>
+    </div>
+    </>
   );
 }

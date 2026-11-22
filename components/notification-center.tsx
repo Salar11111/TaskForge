@@ -25,10 +25,15 @@ export function NotificationCenter() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon' className='h-9 w-9 relative' aria-label='Notifications'>
+        <Button
+          variant='ghost'
+          size='icon'
+          className='h-9 w-9 relative'
+          aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+        >
           <Bell className='h-4 w-4' />
           {unread > 0 && (
-            <Badge className='absolute -right-1 -top-1 h-4 min-w-4 justify-center rounded-full px-1 text-[0.6rem]'>
+            <Badge aria-hidden='true' className='absolute -right-1 -top-1 h-4 min-w-4 justify-center rounded-full px-1 text-[0.6rem]'>
               {unread}
             </Badge>
           )}

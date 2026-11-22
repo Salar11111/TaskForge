@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, Kanban, Loader2 } from 'lucide-react';
+import { playAuthExit } from '@/lib/auth-transition';
 
 export default function SetupForm() {
   const [name, setName] = useState('');
@@ -28,6 +29,7 @@ export default function SetupForm() {
         const data = (await response.json().catch(() => ({}))) as { message?: string };
         setError(data.message || 'Failed to create workspace');
       } else {
+        await playAuthExit(event.currentTarget, 'workspace');
         router.push('/');
       }
     } catch {
@@ -38,6 +40,7 @@ export default function SetupForm() {
   };
 
   return (
+    <>
     <div className='auth-card'>
       <div className='auth-mobile-brand'>
         <span className='auth-brand-mark'><Kanban className='h-5 w-5' aria-hidden='true' /></span>
@@ -74,5 +77,10 @@ export default function SetupForm() {
         </Button>
       </form>
     </div>
+
+    <div className='auth-exit-veil' aria-hidden='true'>
+      <span className='auth-veil-mark'><Kanban className='h-7 w-7' /></span>
+    </div>
+    </>
   );
 }

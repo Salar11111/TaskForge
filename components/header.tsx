@@ -70,7 +70,7 @@ export function Header() {
         <div className="flex items-center gap-2 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" aria-label={createLabels[view]} className="gap-2">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">{createLabels[view]}</span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-70" />
