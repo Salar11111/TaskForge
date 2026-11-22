@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         include: {
           assignee: { select: { id: true, name: true, image: true, color: true } },
           project: { select: { id: true, name: true, color: true } },
+          labels: { select: { label: { select: { id: true, name: true, color: true } } } },
         },
         orderBy: [{ status: 'asc' }, { order: 'asc' }],
         take: limit,
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
     const ctx = await requireWorkspace(request);
     const body = await request.json();
     const validated = taskSchema.parse(body);
+    const { labelIds = [], ...taskData } = validated;
 
     const project = await prisma.project.findUnique({
       where: { id: validated.projectId, workspaceId: ctx.workspace.id },
@@ -60,6 +62,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (labelIds.length) {
+      const found = await prisma.label.count({ where: { id: { in: labelIds }, workspaceId: ctx.workspace.id } });
+      if (found !== new Set(labelIds).size) {
+        throw new WorkspaceError(400, 'Unknown label');
+      }
+    }
+
     const maxOrder = await prisma.task.aggregate({
       where: { projectId: validated.projectId, status: validated.status },
       _max: { order: true },
@@ -67,17 +76,15 @@ export async function POST(request: NextRequest) {
 
     const task = await prisma.task.create({
       data: {
-        ...validated,
+        ...taskData,
         dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
         order: (maxOrder._max.order ?? -1) + 1,
+        labels: { create: labelIds.map((labelId) => ({ labelId })) },
       },
       include: {
-        assignee: {
-          select: { id: true, name: true, image: true, color: true },
-        },
-        project: {
-          select: { id: true, name: true, color: true },
-        },
+        assignee: { select: { id: true, name: true, image: true, color: true } },
+        project: { select: { id: true, name: true, color: true } },
+        labels: { select: { label: { select: { id: true, name: true, color: true } } } },
       },
     });
 

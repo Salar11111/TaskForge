@@ -1,5 +1,5 @@
 ﻿import { ColorName } from './colors';
-import { ProjectInput, TaskInput, UserInput } from './validations';
+import { ProjectInput, TaskInput, UserInput, LabelInput } from './validations';
 import { useAppStore } from './store';
 
 export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
@@ -45,6 +45,13 @@ export interface Attachment {
   createdAt: string;
 }
 
+export interface Label {
+  id: string;
+  name: string;
+  color: string;
+  _count?: { tasks: number };
+}
+
 export interface User {
   id: string;
   name: string;
@@ -70,6 +77,7 @@ export interface Task {
   order: number;
   project?: { name: string };
   assignee?: { name: string; image: string | null; color: ColorName };
+  labels?: Array<{ label: { id: string; name: string; color: string } }>;
 }
 
 export interface TaskWithProjectName extends Task {
@@ -163,6 +171,13 @@ export const commentApi = {
 
 export const activityApi = {
   list: (taskId: string) => request<Activity[]>(`/tasks/${taskId}/activity`),
+};
+
+export const labelApi = {
+  list: () => request<Label[]>('/labels'),
+  create: (data: LabelInput) => request<Label>('/labels', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<LabelInput>) => request<Label>(`/labels/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => request<void>(`/labels/${id}`, { method: 'DELETE' }),
 };
 
 export const attachmentApi = {

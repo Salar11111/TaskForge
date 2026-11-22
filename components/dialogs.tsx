@@ -32,6 +32,7 @@ function taskDefaults(defaultValues?: DialogDefaults<TaskInput>, projects: Array
     assigneeId: defaultValues?.assigneeId ?? undefined,
     dueDate: defaultValues?.dueDate ?? null,
     order: defaultValues?.order ?? 0,
+    labelIds: defaultValues?.labelIds ?? [],
   };
 }
 
@@ -114,12 +115,13 @@ export function ProjectDialog({ isOpen, onClose, defaultValues }: { isOpen: bool
   );
 }
 
-export function TaskDialog({ isOpen, onClose, defaultValues, projects, users }: { 
+export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, labels = [] }: { 
   isOpen: boolean; 
   onClose: () => void; 
   defaultValues?: DialogDefaults<TaskInput>;
   projects: Array<{ id: string; name: string }>;
   users: Array<{ id: string; name: string }>;
+  labels?: Array<{ id: string; name: string; color: string }>;
 }) {
   const queryClient = useQueryClient();
 
@@ -230,6 +232,32 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users }: 
               )}
             </div>
           </div>
+          {labels.length > 0 && (
+            <div className="space-y-2">
+              <Label>Labels</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {labels.map((label) => {
+                  const selected = (dialogForm.watch('labelIds') ?? []).includes(label.id);
+                  return (
+                    <button
+                      key={label.id}
+                      type='button'
+                      aria-pressed={selected}
+                      className={cn('rounded-full border px-2 py-0.5 text-xs', selected
+                        ? getColorTokens(label.color).badge
+                        : 'border-border text-muted-foreground hover:text-foreground')}
+                      onClick={() => {
+                        const current = dialogForm.watch('labelIds') ?? [];
+                        dialogForm.setValue('labelIds', selected ? current.filter((id) => id !== label.id) : [...current, label.id], { shouldValidate: true });
+                      }}
+                    >
+                      {label.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </FormDialog>

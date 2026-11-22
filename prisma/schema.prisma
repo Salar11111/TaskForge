@@ -37,6 +37,7 @@ model Task {
   comments    Comment[]
   activity    ActivityLog[]
   attachments Attachment[]
+  labels      TaskLabel[]
 
   @@index([projectId, status, order])
   @@index([assigneeId])
@@ -59,6 +60,28 @@ model User {
   comments      Comment[]
   activity      ActivityLog[]
   attachments   Attachment[]
+}
+
+model Label {
+  id          String      @id @default(cuid())
+  name        String
+  color       String      @default("slate")
+  workspaceId String
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       TaskLabel[]
+  createdAt   DateTime    @default(now())
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+}
+
+model TaskLabel {
+  taskId  String
+  labelId String
+  task    Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
 }
 
 model Comment {
@@ -151,6 +174,7 @@ model Workspace {
 
   workspaceMembers WorkspaceMember[]
   projects Project[]
+  labels   Label[]
 }
 
 model WorkspaceMember {

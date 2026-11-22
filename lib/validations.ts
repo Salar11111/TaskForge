@@ -26,6 +26,7 @@ export const taskSchema = z.object({
   assigneeId: z.string().optional(),
   dueDate: z.string().datetime().optional().nullable(),
   order: z.number().int().nonnegative().optional(),
+  labelIds: z.array(z.string()).optional(),
 });
 
 export const taskReorderSchema = z.object({
@@ -60,3 +61,6 @@ export type ProjectInput = z.infer<typeof projectSchema>;
 export type TaskInput = z.infer<typeof taskSchema>;
 export type TaskReorderInput = z.infer<typeof taskReorderSchema>;
 export type UserInput = z.infer<typeof userSchema>;
+export type LabelInput = { name: string; color?: ColorName };
+
+type ColorName = 'emerald' | 'violet' | 'amber' | 'rose' | 'cyan' | 'orange' | 'teal' | 'pink' | 'sky' | 'slate';

@@ -10,7 +10,7 @@ import { TaskDialog, ProjectDialog, UserDialog } from '@/components/dialogs';
 import { CommandPalette } from '@/components/command-palette';
 import { Realtime } from '@/components/realtime';
 import { TaskDetail } from '@/components/task-detail';
-import { projectApi, taskApi, userApi } from '@/lib/api';
+import { projectApi, taskApi, userApi, labelApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
 import { type ColorName } from '@/lib/colors';
 
@@ -34,6 +34,7 @@ export default function ClientShell() {
   const { data: projects } = useQuery({ queryKey: queryKeys.projects.list(true), queryFn: () => projectApi.list(true) });
   const { data: users } = useQuery({ queryKey: queryKeys.users.list(), queryFn: () => userApi.list() });
   const { data: tasks } = useQuery({ queryKey: queryKeys.tasks.all, queryFn: () => taskApi.list() });
+  const { data: labels } = useQuery({ queryKey: queryKeys.labels.list(), queryFn: () => labelApi.list() });
 
   const editedTask = taskDialogEditingId ? tasks?.find((t) => t.id === taskDialogEditingId) : undefined;
   const taskDialogDefaults = editedTask
@@ -47,6 +48,7 @@ export default function ClientShell() {
         assigneeId: editedTask.assigneeId ?? undefined,
         dueDate: editedTask.dueDate ?? undefined,
         order: editedTask.order,
+        labelIds: editedTask.labels?.map((l) => l.label.id) ?? [],
       }
     : { projectId: selectedProjectId ?? undefined, ...(taskDialogInitialStatus ? { status: taskDialogInitialStatus } : {}) };
 
@@ -88,6 +90,7 @@ export default function ClientShell() {
         defaultValues={taskDialogDefaults}
         projects={projects || []}
         users={users || []}
+        labels={labels || []}
       />
 
       <ProjectDialog

@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { taskApi, projectApi, type Task } from '@/lib/api';
+import { taskApi, projectApi, userApi, labelApi, type Task } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,6 +83,11 @@ function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, overlay }: Task
           <Badge variant='outline' className={cn('text-[0.65rem] px-1.5 py-0 h-5', priorityTokens.badge)}>
             {task.priority}
           </Badge>
+          {(task.labels ?? []).map((l) => (
+            <Badge key={l.label.id} variant='outline' className={cn('text-[0.65rem] px-1.5 py-0 h-5', getColorTokens(l.label.color).badge)}>
+              {l.label.name}
+            </Badge>
+          ))}
           {task.dueDate && (
             <span className='text-[0.65rem] text-muted-foreground tabular-nums'>{formatRelativeDate(task.dueDate)}</span>
           )}
@@ -170,11 +175,19 @@ export function BoardView() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<Status | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const [statusFilter, setStatusFilter] = useState<Status[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
+  const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [labelFilter, setLabelFilter] = useState<string[]>([]);
+  const [dueFilter, setDueFilter] = useState<'all' | 'overdue' | 'week'>('all');
 
   const { data: projects } = useQuery({
     queryKey: queryKeys.projects.list(),
     queryFn: () => projectApi.list(),
   });
+
+  const { data: users } = useQuery({ queryKey: queryKeys.users.list(), queryFn: () => userApi.list() });
+  const { data: labels } = useQuery({ queryKey: queryKeys.labels.list(), queryFn: () => labelApi.list() });
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: queryKeys.tasks.list(selectedProjectId || ''),
@@ -234,12 +247,30 @@ export function BoardView() {
     );
   }, [localTasks, searchQuery]);
 
+  const visibleTasks = useMemo(() => {
+    const now = Date.now();
+    const week = now + 7 * 24 * 60 * 60 * 1000;
+    return filteredTasks.filter((t) => {
+      if (statusFilter.length && !statusFilter.includes(t.status as Status)) return false;
+      if (priorityFilter.length && !priorityFilter.includes(t.priority)) return false;
+      if (assigneeFilter && t.assigneeId !== assigneeFilter) return false;
+      if (labelFilter.length && !labelFilter.every((id) => t.labels?.some((l) => l.label.id === id))) return false;
+      if (dueFilter !== 'all') {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate).getTime();
+        if (dueFilter === 'overdue' && !(due < now && t.status !== 'DONE')) return false;
+        if (dueFilter === 'week' && (due < now || due > week)) return false;
+      }
+      return true;
+    });
+  }, [filteredTasks, statusFilter, priorityFilter, assigneeFilter, labelFilter, dueFilter]);
+
   const groupedTasks = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
-      acc[status] = filteredTasks.filter((task) => task.status === status).sort((a, b) => a.order - b.order);
+      acc[status] = visibleTasks.filter((task) => task.status === status).sort((a, b) => a.order - b.order);
       return acc;
     }, {} as Record<Status, Task[]>);
-  }, [filteredTasks]);
+  }, [visibleTasks]);
 
   const findContainer = useCallback((id: string): Status | null => {
     if (id.startsWith('column-')) return id.replace('column-', '') as Status;
@@ -378,6 +409,68 @@ export function BoardView() {
             <Plus className='h-4 w-4 mr-2' /> New Task
           </Button>
         </div>
+      </div>
+
+      <div className='flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2 text-xs'>
+        <span className='text-muted-foreground'>Filters</span>
+        {STATUSES.map((s) => (
+          <button
+            key={s}
+            aria-pressed={statusFilter.includes(s)}
+            onClick={() => setStatusFilter((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])}
+            className={cn('rounded-full border px-2 py-1', statusFilter.includes(s) ? 'bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground')}
+          >
+            {STATUS_LABELS[s]}
+          </button>
+        ))}
+        <span className='mx-1 h-4 w-px bg-border' />
+        {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
+          <button
+            key={p}
+            aria-pressed={priorityFilter.includes(p)}
+            onClick={() => setPriorityFilter((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])}
+            className={cn('rounded-full border px-2 py-1', priorityFilter.includes(p) ? 'bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground')}
+          >
+            {p}
+          </button>
+        ))}
+        <select
+          aria-label='Filter by assignee'
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          className='rounded-md border border-border bg-background px-2 py-1 text-xs'
+        >
+          <option value=''>All assignees</option>
+          {(users ?? []).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+        </select>
+        <select
+          aria-label='Filter by due date'
+          value={dueFilter}
+          onChange={(e) => setDueFilter(e.target.value as 'all' | 'overdue' | 'week')}
+          className='rounded-md border border-border bg-background px-2 py-1 text-xs'
+        >
+          <option value='all'>Any due date</option>
+          <option value='overdue'>Overdue</option>
+          <option value='week'>Due this week</option>
+        </select>
+        {(labels ?? []).map((label) => (
+          <button
+            key={label.id}
+            aria-pressed={labelFilter.includes(label.id)}
+            onClick={() => setLabelFilter((prev) => prev.includes(label.id) ? prev.filter((x) => x !== label.id) : [...prev, label.id])}
+            className={cn('rounded-full border px-2 py-1', labelFilter.includes(label.id) ? getColorTokens(label.color).badge : 'border-border text-muted-foreground hover:text-foreground')}
+          >
+            {label.name}
+          </button>
+        ))}
+        {(statusFilter.length > 0 || priorityFilter.length > 0 || assigneeFilter || labelFilter.length > 0 || dueFilter !== 'all') && (
+          <button
+            className='ml-auto text-primary hover:underline'
+            onClick={() => { setStatusFilter([]); setPriorityFilter([]); setAssigneeFilter(''); setLabelFilter([]); setDueFilter('all'); }}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>

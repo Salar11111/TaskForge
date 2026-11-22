@@ -12,6 +12,7 @@ const taskIncludes = {
   project: {
     select: { id: true, name: true, color: true },
   },
+  labels: { select: { label: { select: { id: true, name: true, color: true } } } },
 };
 
 export async function GET(
@@ -45,10 +46,12 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const validated = taskSchema.partial().parse(body);
+    const { labelIds, ...rest } = validated;
 
     const updateData = {
-      ...validated,
+      ...rest,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : validated.dueDate === null ? null : undefined,
+      ...(labelIds ? { labels: { deleteMany: {}, create: labelIds.map((labelId) => ({ labelId })) } } : {}),
     };
 
     if (validated.assigneeId) {
@@ -60,21 +63,19 @@ export async function PATCH(
       }
     }
 
-    const updated = await prisma.task.updateMany({
-      where: { id, project: { workspaceId: ctx.workspace.id } },
-      data: updateData,
-    });
-    if (updated.count === 0) {
-      throw new WorkspaceError(404, 'Task not found');
+    if (labelIds?.length) {
+      const found = await prisma.label.count({ where: { id: { in: labelIds }, workspaceId: ctx.workspace.id } });
+      if (found !== new Set(labelIds).size) {
+        throw new WorkspaceError(400, 'Unknown label');
+      }
     }
 
-    const task = await prisma.task.findFirst({
+    // `update` raises P2025 (mapped to 404) if the task isn't in this workspace.
+    const task = await prisma.task.update({
       where: { id, project: { workspaceId: ctx.workspace.id } },
+      data: updateData,
       include: taskIncludes,
     });
-    if (!task) {
-      throw new WorkspaceError(404, 'Task not found');
-    }
 
     await prisma.activityLog.create({
       data: { action: 'updated task', meta: Object.keys(validated).join(', '), taskId: id, actorId: ctx.session.user.id },
