@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import Link from 'next/link';
-import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, Sparkles, Milestone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Projects', icon: FolderKanban, view: 'projects' as const },
   { name: 'Board', icon: Kanban, view: 'board' as const },
   { name: 'Team', icon: Users, view: 'team' as const },
+  { name: 'Roadmap', icon: Milestone, view: 'roadmap' as const },
 ];
 
 export function Sidebar() {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, X, Menu, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, X, Menu, Sparkles, Milestone } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ const navigation = [
   { name: 'Projects', icon: FolderKanban, view: 'projects' as const },
   { name: 'Board', icon: Kanban, view: 'board' as const },
   { name: 'Team', icon: Users, view: 'team' as const },
+  { name: 'Roadmap', icon: Milestone, view: 'roadmap' as const },
 ];
 
 export function MobileSidebar() {

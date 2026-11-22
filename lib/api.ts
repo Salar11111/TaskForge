@@ -61,6 +61,16 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface Sprint {
+  id: string;
+  name: string;
+  goal: string | null;
+  startDate: string;
+  endDate: string;
+  taskCount: number;
+  completed: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -87,6 +97,9 @@ export interface Task {
   project?: { name: string };
   assignee?: { name: string; image: string | null; color: ColorName };
   labels?: Array<{ label: { id: string; name: string; color: string } }>;
+  sprintId?: string | null;
+  sprint?: { id: string; name: string } | null;
+  deletedAt?: string | null;
 }
 
 export interface TaskWithProjectName extends Task {
@@ -155,6 +168,10 @@ export const taskApi = {
   delete: (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
   reorder: (tasks: Array<{ id: string; status: Status; order: number }>) =>
     request<void>('/tasks/reorder', { method: 'PATCH', body: JSON.stringify({ tasks }) }),
+  trash: () => request<Task[]>('/tasks/trash'),
+  restore: (id: string) => request<void>(`/tasks/${id}/restore`, { method: 'POST' }),
+  bulk: (ids: string[], action: 'delete' | 'restore' | 'status', status?: Status) =>
+    request<{ success: boolean; affected: number }>('/tasks/bulk', { method: 'PATCH', body: JSON.stringify({ ids, action, status }) }),
 };
 
 export const userApi = {
@@ -180,6 +197,15 @@ export const commentApi = {
 
 export const activityApi = {
   list: (taskId: string) => request<Activity[]>(`/tasks/${taskId}/activity`),
+};
+
+export const sprintApi = {
+  list: () => request<Sprint[]>('/sprints'),
+  create: (data: { name: string; goal?: string | null; startDate: string; endDate: string }) =>
+    request<Sprint>('/sprints', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ name: string; goal: string | null }>) =>
+    request<Sprint>(`/sprints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => request<void>(`/sprints/${id}`, { method: 'DELETE' }),
 };
 
 export const notificationApi = {

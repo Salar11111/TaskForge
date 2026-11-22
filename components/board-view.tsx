@@ -43,10 +43,12 @@ interface TaskCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onOpenDetail: () => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
   overlay?: boolean;
 }
 
-function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, overlay }: TaskCardProps) {
+function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, selected, onToggleSelect, overlay }: TaskCardProps) {
   const priorityTokens = getColorTokens(getPriorityColor(task.priority));
 
   return (
@@ -55,6 +57,17 @@ function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, overlay }: Task
       overlay ? 'rotate-2 opacity-90 shadow-lg ring-2 ring-emerald-500/40' : 'hover:shadow-md hover:-translate-y-0.5'
     )}>
       <div className='flex items-start justify-between gap-2 mb-1.5'>
+        {onToggleSelect && (
+          <input
+            type='checkbox'
+            checked={!!selected}
+            aria-label={`Select ${task.title}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => onToggleSelect(task.id)}
+            className='mt-1 h-3.5 w-3.5 shrink-0'
+          />
+        )}
         <h4
           className='font-medium text-sm leading-snug line-clamp-2 flex-1 cursor-pointer hover:underline'
           onClick={onOpenDetail}
@@ -100,7 +113,7 @@ function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, overlay }: Task
   );
 }
 
-function SortableTaskCard({ task, onEdit, onDelete, onOpenDetail }: Omit<TaskCardProps, 'overlay'>) {
+function SortableTaskCard({ task, onEdit, onDelete, onOpenDetail, selected, onToggleSelect }: Omit<TaskCardProps, 'overlay'>) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -109,18 +122,20 @@ function SortableTaskCard({ task, onEdit, onDelete, onOpenDetail }: Omit<TaskCar
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={cn(isDragging && 'opacity-40 ring-2 ring-emerald-500/40 shadow-lg rounded-lg')}>
-      <TaskCardContent task={task} onEdit={onEdit} onDelete={onDelete} onOpenDetail={onOpenDetail} />
+      <TaskCardContent task={task} onEdit={onEdit} onDelete={onDelete} onOpenDetail={onOpenDetail} selected={selected} onToggleSelect={onToggleSelect} />
     </div>
   );
 }
 
-function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, onOpenDetail, isOver }: {
+function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, onOpenDetail, selectedIds, onToggleSelect, isOver }: {
   status: Status;
   tasks: Task[];
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
   onOpenDetail: (task: Task) => void;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
   isOver: boolean;
 }) {
   const statusColor = getStatusColor(status);
@@ -159,6 +174,8 @@ function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, onOpenDeta
                 onEdit={() => onEditTask(task)}
                 onDelete={() => onDeleteTask(task)}
                 onOpenDetail={() => onOpenDetail(task)}
+                selected={selectedIds.includes(task.id)}
+                onToggleSelect={onToggleSelect}
               />
             ))
           )}
@@ -175,6 +192,8 @@ export function BoardView() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<Status | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showTrash, setShowTrash] = useState(false);
   const [statusFilter, setStatusFilter] = useState<Status[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState('');
@@ -188,6 +207,7 @@ export function BoardView() {
 
   const { data: users } = useQuery({ queryKey: queryKeys.users.list(), queryFn: () => userApi.list() });
   const { data: labels } = useQuery({ queryKey: queryKeys.labels.list(), queryFn: () => labelApi.list() });
+  const { data: deletedTasks } = useQuery({ queryKey: queryKeys.trash.list(), queryFn: () => taskApi.trash(), enabled: showTrash });
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: queryKeys.tasks.list(selectedProjectId || ''),
@@ -231,9 +251,32 @@ export function BoardView() {
     mutationFn: taskApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.trash.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       toast.success('Task deleted');
     },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const invalidateTaskQueries = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.trash.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+  };
+
+  const bulkMutation = useMutation({
+    mutationFn: (vars: { action: 'delete' | 'status'; status?: Status }) => taskApi.bulk(selectedIds, vars.action, vars.status),
+    onSuccess: (_result, vars) => {
+      toast.success(vars.action === 'delete' ? 'Tasks deleted' : 'Status updated');
+      setSelectedIds([]);
+      invalidateTaskQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => taskApi.restore(id),
+    onSuccess: () => { toast.success('Task restored'); invalidateTaskQueries(); },
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -473,6 +516,35 @@ export function BoardView() {
         )}
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className='flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2 text-sm'>
+          <span>{selectedIds.length} selected</span>
+          <Button size='sm' variant='outline' onClick={() => bulkMutation.mutate({ action: 'status', status: 'DONE' })}>Mark Done</Button>
+          <Button size='sm' variant='destructive' onClick={() => bulkMutation.mutate({ action: 'delete' })}>Delete</Button>
+          <Button size='sm' variant='ghost' onClick={() => setSelectedIds([])}>Clear</Button>
+        </div>
+      )}
+
+      <div>
+        <Button variant='ghost' size='sm' onClick={() => setShowTrash((v) => !v)}>
+          {showTrash ? 'Hide' : 'Show'} recently deleted
+        </Button>
+        {showTrash && (
+          <Card className='mt-2'>
+            <CardHeader><CardTitle>Recently deleted</CardTitle></CardHeader>
+            <CardContent className='space-y-2'>
+              {(deletedTasks ?? []).length === 0 && <p className='text-sm text-muted-foreground'>No deleted tasks.</p>}
+              {(deletedTasks ?? []).map((t) => (
+                <div key={t.id} className='flex items-center justify-between gap-2 text-sm'>
+                  <span className='truncate'>{t.title}</span>
+                  <Button size='sm' variant='outline' onClick={() => restoreMutation.mutate(t.id)}>Restore</Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         <div className='flex gap-4 overflow-x-auto pb-4'>
           {STATUSES.map((status) => (
@@ -485,6 +557,8 @@ export function BoardView() {
               onEditTask={(task) => setTaskDialogOpen(true, task.id)}
               onDeleteTask={setDeletingTask}
               onOpenDetail={(task) => setDetailTaskId(task.id)}
+              selectedIds={selectedIds}
+              onToggleSelect={(id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])}
             />
           ))}
         </div>

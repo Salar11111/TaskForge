@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const today = startOfDay(new Date());
     const weekAgo = addDays(today, -7);
     const twoWeeksAgo = addDays(today, -14);
-    const where = { project: { workspaceId: ctx.workspace.id } };
+    const where = { project: { workspaceId: ctx.workspace.id }, deletedAt: null };
     // "Last week" buckets, used to compute the dashboard trends.
     const [
       totalTasks, statusBreakdown, priorityBreakdown, projects, overdueTasks, upcomingTasks,

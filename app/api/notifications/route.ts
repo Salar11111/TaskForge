@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const [persisted, dueTasks] = await Promise.all([
       prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
       prisma.task.findMany({
-        where: { assigneeId: userId, status: { not: 'DONE' }, dueDate: { lte: new Date(Date.now() + 48 * 60 * 60 * 1000) } },
+        where: { assigneeId: userId, status: { not: 'DONE' }, deletedAt: null, dueDate: { lte: new Date(Date.now() + 48 * 60 * 60 * 1000) } },
         select: { id: true, title: true, dueDate: true },
         orderBy: { dueDate: 'asc' },
         take: 20,

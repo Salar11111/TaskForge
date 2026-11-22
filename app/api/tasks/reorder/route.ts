@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest) {
       await Promise.all(
         validated.tasks.map(async (task) => {
           const updated = await tx.task.updateMany({
-            where: { id: task.id, project: { workspaceId: ctx.workspace.id } },
+            where: { id: task.id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
             data: { status: task.status, order: task.order },
           });
           if (updated.count === 0) {

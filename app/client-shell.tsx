@@ -6,11 +6,12 @@ import { Dashboard } from '@/components/dashboard';
 import { ProjectsView } from '@/components/projects-view';
 import { BoardView } from '@/components/board-view';
 import { TeamView } from '@/components/team-view';
+import { RoadmapView } from '@/components/roadmap-view';
 import { TaskDialog, ProjectDialog, UserDialog } from '@/components/dialogs';
 import { CommandPalette } from '@/components/command-palette';
 import { Realtime } from '@/components/realtime';
 import { TaskDetail } from '@/components/task-detail';
-import { projectApi, taskApi, userApi, labelApi } from '@/lib/api';
+import { projectApi, taskApi, userApi, labelApi, sprintApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
 import { type ColorName } from '@/lib/colors';
 
@@ -35,6 +36,7 @@ export default function ClientShell() {
   const { data: users } = useQuery({ queryKey: queryKeys.users.list(), queryFn: () => userApi.list() });
   const { data: tasks } = useQuery({ queryKey: queryKeys.tasks.all, queryFn: () => taskApi.list() });
   const { data: labels } = useQuery({ queryKey: queryKeys.labels.list(), queryFn: () => labelApi.list() });
+  const { data: sprints } = useQuery({ queryKey: queryKeys.sprints.list(), queryFn: () => sprintApi.list() });
 
   const editedTask = taskDialogEditingId ? tasks?.find((t) => t.id === taskDialogEditingId) : undefined;
   const taskDialogDefaults = editedTask
@@ -49,6 +51,7 @@ export default function ClientShell() {
         dueDate: editedTask.dueDate ?? undefined,
         order: editedTask.order,
         labelIds: editedTask.labels?.map((l) => l.label.id) ?? [],
+        sprintId: editedTask.sprintId ?? null,
       }
     : { projectId: selectedProjectId ?? undefined, ...(taskDialogInitialStatus ? { status: taskDialogInitialStatus } : {}) };
 
@@ -79,6 +82,7 @@ export default function ClientShell() {
       {view === 'projects' && <ProjectsView />}
       {view === 'board' && <BoardView />}
       {view === 'team' && <TeamView />}
+      {view === 'roadmap' && <RoadmapView />}
 
       <CommandPalette />
       <Realtime />
@@ -91,6 +95,7 @@ export default function ClientShell() {
         projects={projects || []}
         users={users || []}
         labels={labels || []}
+        sprints={sprints || []}
       />
 
       <ProjectDialog

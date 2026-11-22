@@ -14,6 +14,7 @@ const taskIncludes = {
     select: { id: true, name: true, color: true },
   },
   labels: { select: { label: { select: { id: true, name: true, color: true } } } },
+  sprint: { select: { id: true, name: true } },
 };
 
 export async function GET(
@@ -24,7 +25,7 @@ export async function GET(
     const ctx = await requireWorkspace(request);
     const { id } = await params;
     const task = await prisma.task.findFirst({
-      where: { id, project: { workspaceId: ctx.workspace.id } },
+      where: { id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
       include: taskIncludes,
     });
 
@@ -71,9 +72,14 @@ export async function PATCH(
       }
     }
 
+    if (validated.sprintId) {
+      const sprint = await prisma.sprint.findFirst({ where: { id: validated.sprintId, workspaceId: ctx.workspace.id } });
+      if (!sprint) throw new WorkspaceError(400, 'Unknown sprint');
+    }
+
     // `update` raises P2025 (mapped to 404) if the task isn't in this workspace.
     const task = await prisma.task.update({
-      where: { id, project: { workspaceId: ctx.workspace.id } },
+      where: { id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
       data: updateData,
       include: taskIncludes,
     });
@@ -96,8 +102,9 @@ export async function DELETE(
   try {
     const ctx = await requireWorkspace(request);
     const { id } = await params;
-    const deleted = await prisma.task.deleteMany({
-      where: { id, project: { workspaceId: ctx.workspace.id } },
+    const deleted = await prisma.task.updateMany({
+      where: { id, project: { workspaceId: ctx.workspace.id }, deletedAt: null },
+      data: { deletedAt: new Date() },
     });
     if (deleted.count === 0) {
       throw new WorkspaceError(404, 'Task not found');

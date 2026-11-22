@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type View = 'dashboard' | 'projects' | 'board' | 'team';
+export type View = 'dashboard' | 'projects' | 'board' | 'team' | 'roadmap';
 export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 
 interface AppState {

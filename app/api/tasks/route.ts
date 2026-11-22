@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const where = {
       ...(projectId ? { projectId } : {}),
       project: { workspaceId: ctx.workspace.id },
+      deletedAt: null,
     };
 
     const [tasks, total] = await Promise.all([
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
           assignee: { select: { id: true, name: true, image: true, color: true } },
           project: { select: { id: true, name: true, color: true } },
           labels: { select: { label: { select: { id: true, name: true, color: true } } } },
+          sprint: { select: { id: true, name: true } },
         },
         orderBy: [{ status: 'asc' }, { order: 'asc' }],
         take: limit,
@@ -70,6 +72,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (validated.sprintId) {
+      const sprint = await prisma.sprint.findFirst({ where: { id: validated.sprintId, workspaceId: ctx.workspace.id } });
+      if (!sprint) throw new WorkspaceError(400, 'Unknown sprint');
+    }
+
     const maxOrder = await prisma.task.aggregate({
       where: { projectId: validated.projectId, status: validated.status },
       _max: { order: true },
@@ -86,6 +93,7 @@ export async function POST(request: NextRequest) {
         assignee: { select: { id: true, name: true, image: true, color: true } },
         project: { select: { id: true, name: true, color: true } },
         labels: { select: { label: { select: { id: true, name: true, color: true } } } },
+        sprint: { select: { id: true, name: true } },
       },
     });
 

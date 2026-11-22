@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const assigned = await prisma.task.findMany({
-      where: { assigneeId: { in: users.map((u) => u.id) } },
+      where: { assigneeId: { in: users.map((u) => u.id) }, deletedAt: null },
       select: { assigneeId: true, priority: true },
     });
 

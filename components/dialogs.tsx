@@ -33,6 +33,7 @@ function taskDefaults(defaultValues?: DialogDefaults<TaskInput>, projects: Array
     dueDate: defaultValues?.dueDate ?? null,
     order: defaultValues?.order ?? 0,
     labelIds: defaultValues?.labelIds ?? [],
+    sprintId: defaultValues?.sprintId ?? null,
   };
 }
 
@@ -115,13 +116,14 @@ export function ProjectDialog({ isOpen, onClose, defaultValues }: { isOpen: bool
   );
 }
 
-export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, labels = [] }: { 
+export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, labels = [], sprints = [] }: { 
   isOpen: boolean; 
   onClose: () => void; 
   defaultValues?: DialogDefaults<TaskInput>;
   projects: Array<{ id: string; name: string }>;
   users: Array<{ id: string; name: string }>;
   labels?: Array<{ id: string; name: string; color: string }>;
+  sprints?: Array<{ id: string; name: string }>;
 }) {
   const queryClient = useQueryClient();
 
@@ -196,6 +198,19 @@ export function TaskDialog({ isOpen, onClose, defaultValues, projects, users, la
               <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sprintId">Sprint</Label>
+            <Select
+              value={dialogForm.watch('sprintId') ?? ''}
+              onValueChange={(value) => dialogForm.setValue('sprintId', value || null, { shouldValidate: true })}
+            >
+              <SelectTrigger><SelectValue placeholder="No sprint" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No sprint</SelectItem>
+                {sprints.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

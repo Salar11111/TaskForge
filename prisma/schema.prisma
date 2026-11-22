@@ -31,6 +31,9 @@ model Task {
   project     Project  @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
   assigneeId  String?
   assignee    User?    @relation("TaskAssignees", fields: [assigneeId], references: [id], onDelete: SetNull)
+  sprintId    String?
+  sprint      Sprint?  @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -41,6 +44,7 @@ model Task {
 
   @@index([projectId, status, order])
   @@index([assigneeId])
+  @@index([deletedAt])
 }
 
 model User {
@@ -74,6 +78,20 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, read, createdAt])
+}
+
+model Sprint {
+  id          String   @id @default(cuid())
+  name        String
+  goal        String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId, startDate])
 }
 
 model Label {
@@ -189,6 +207,7 @@ model Workspace {
   workspaceMembers WorkspaceMember[]
   projects Project[]
   labels   Label[]
+  sprints  Sprint[]
 }
 
 model WorkspaceMember {

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
           select: { tasks: true },
         },
         tasks: {
+          where: { deletedAt: null },
           select: {
             status: true,
             assignee: {

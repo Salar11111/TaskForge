@@ -16,6 +16,7 @@ const viewConfig = {
   projects: { title: 'Projects', subtitle: 'Manage and organize your projects' },
   board: { title: 'Board', subtitle: 'Kanban board for task management' },
   team: { title: 'Team', subtitle: 'Team members and workload' },
+  roadmap: { title: 'Roadmap', subtitle: 'Sprints and delivery timeline' },
 };
 
 const createLabels = {
@@ -23,6 +24,7 @@ const createLabels = {
   projects: 'New Project',
   board: 'New Task',
   team: 'New Member',
+  roadmap: 'New Task',
 };
 
 export function Header() {

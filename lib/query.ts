@@ -25,6 +25,14 @@
     all: ['notifications'] as const,
     list: () => ['notifications', 'list'] as const,
   },
+  sprints: {
+    all: ['sprints'] as const,
+    list: () => ['sprints', 'list'] as const,
+  },
+  trash: {
+    all: ['trash'] as const,
+    list: () => ['trash', 'list'] as const,
+  },
   comments: (taskId: string) => ['comments', taskId] as const,
   activity: (taskId: string) => ['activity', taskId] as const,
   attachments: (taskId: string) => ['attachments', taskId] as const,

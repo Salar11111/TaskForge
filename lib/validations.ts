@@ -27,6 +27,7 @@ export const taskSchema = z.object({
   dueDate: z.string().datetime().optional().nullable(),
   order: z.number().int().nonnegative().optional(),
   labelIds: z.array(z.string()).optional(),
+  sprintId: z.string().optional().nullable(),
 });
 
 export const taskReorderSchema = z.object({
