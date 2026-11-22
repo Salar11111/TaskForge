@@ -14,7 +14,7 @@ describe('lib/colors — static Tailwind token parity', () => {
       expect(c.ring).toBe(`ring-${name}-500/20`);
       expect(c.soft).toBe(`bg-${name}-500/10`);
       expect(c.text).toBe(`text-${name}-700 dark:text-${name}-300`);
-      expect(c.avatarBg).toBe(`bg-${name}-600 text-white`);
+      expect(c.avatarBg).toBe(`bg-${name}-700 text-white`);
       expect(c.solid).toBe(`bg-${name}-500`);
       expect(c.headerBg).toBe(`bg-${name}-500/10`);
       expect(c.columnBg).toBe(`bg-${name}-500/5`);

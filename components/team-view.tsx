@@ -70,7 +70,7 @@ export function TeamView() {
           <h1 className='text-2xl font-semibold tracking-tight'>Team</h1>
           <p className='text-sm text-muted-foreground'>Team members and workload</p>
         </div>
-        <Button onClick={() => setUserDialogOpen(true)}>
+        <Button variant='outline' onClick={() => setUserDialogOpen(true)}>
           <Plus className='h-4 w-4 mr-2' /> Add Member
         </Button>
       </div>
@@ -81,7 +81,7 @@ export function TeamView() {
             <User className='h-12 w-12 mx-auto text-muted-foreground/40 mb-4' />
             <h2 className='text-lg font-semibold tracking-tight mb-1'>No team members yet</h2>
             <p className='text-sm text-muted-foreground mb-4'>Add your first team member to get started</p>
-            <Button onClick={() => setUserDialogOpen(true)}>
+            <Button variant='outline' onClick={() => setUserDialogOpen(true)}>
               <Plus className='h-4 w-4 mr-2' /> Add Member
             </Button>
           </CardContent>
@@ -104,7 +104,7 @@ export function TeamView() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' size='icon' className='h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
+                        <Button variant='ghost' size='icon' aria-label={`Actions for ${user.name}`} className='h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
                           <MoreHorizontal className='h-4 w-4' />
                         </Button>
                       </DropdownMenuTrigger>

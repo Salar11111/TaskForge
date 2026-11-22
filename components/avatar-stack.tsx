@@ -23,7 +23,7 @@ export function AvatarStack({ members, max = 5, size = 'md', className }: Avatar
       {remaining > 0 && (
         <div
           className={cn(
-            'flex items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background font-medium tabular-nums',
+            'flex items-center justify-center rounded-full bg-muted text-foreground ring-2 ring-background font-medium tabular-nums',
             size === 'sm' && 'h-6 w-6 text-[0.65rem]',
             size === 'md' && 'h-8 w-8 text-xs',
             size === 'lg' && 'h-10 w-10 text-sm',
