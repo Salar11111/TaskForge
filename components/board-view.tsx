@@ -65,20 +65,20 @@ function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, selected, onTog
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onChange={() => onToggleSelect(task.id)}
-            className='mt-1 h-3.5 w-3.5 shrink-0'
+            className='mt-1 h-6 w-6 shrink-0'
           />
         )}
-        <h4
+        <h3
           className='font-medium text-sm leading-snug line-clamp-2 flex-1 cursor-pointer hover:underline'
           onClick={onOpenDetail}
           title='Open task details'
         >
           {task.title}
-        </h4>
+        </h3>
         {!overlay && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='icon' className='h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
+              <Button variant='ghost' size='icon' aria-label={`Actions for ${task.title}`} className='h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
                 <MoreHorizontal className='h-3.5 w-3.5' />
               </Button>
             </DropdownMenuTrigger>
@@ -448,7 +448,7 @@ export function BoardView() {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" onClick={() => setTaskDialogOpen(true)}>
+          <Button variant='outline' size="sm" onClick={() => setTaskDialogOpen(true)}>
             <Plus className='h-4 w-4 mr-2' /> New Task
           </Button>
         </div>

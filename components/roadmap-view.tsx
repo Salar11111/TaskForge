@@ -58,7 +58,7 @@ export function RoadmapView() {
           <h1 className='text-2xl font-semibold tracking-tight'>Roadmap</h1>
           <p className='text-sm text-muted-foreground'>Sprints and delivery timeline</p>
         </div>
-        <Button onClick={() => setCreating((v) => !v)}><Plus className='h-4 w-4 mr-2' /> New sprint</Button>
+        <Button variant='outline' onClick={() => setCreating((v) => !v)}><Plus className='h-4 w-4 mr-2' /> New sprint</Button>
       </div>
 
       {creating && (
@@ -68,7 +68,7 @@ export function RoadmapView() {
             <Input aria-label='Sprint goal' placeholder='Goal (optional)' value={goal} onChange={(e) => setGoal(e.target.value)} />
             <Input aria-label='Start date' type='date' value={start} onChange={(e) => setStart(e.target.value)} />
             <Input aria-label='End date' type='date' value={end} onChange={(e) => setEnd(e.target.value)} />
-            <Button disabled={!name || !start || !end || create.isPending} onClick={() => create.mutate()}>Create</Button>
+            <Button variant='outline' disabled={!name || !start || !end || create.isPending} onClick={() => create.mutate()}>Create</Button>
           </CardContent>
         </Card>
       )}

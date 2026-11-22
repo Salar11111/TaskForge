@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+﻿import { expect, test } from '@playwright/test';
 
 test('anonymous API access is denied', async ({ request }) => {
   expect((await request.get('/api/projects')).status()).toBe(401);
