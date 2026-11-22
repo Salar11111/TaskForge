@@ -202,6 +202,17 @@ model Verification {
 }
 
 
+/// Shared rate-limit counters. Used by Node API routes so limits hold across
+/// processes that share this database; the Edge middleware keeps a coarse
+/// in-memory limiter as a first line of defence.
+model RateLimitBucket {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+
+  @@index([resetAt])
+}
+
 model Workspace {
   id        String   @id @default(cuid())
   name      String

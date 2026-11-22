@@ -11,7 +11,7 @@ Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Prisma 5 
 ```bash
 npm install
 npm run db:push          # creates/updates prisma/dev.db
-npm run db:seed          # demo workspace, 4 projects, 19 tasks, 5 team members
+npm run db:seed          # demo workspace, 4 projects, 19 tasks, labels, a sprint and P5 sample data
 npm run dev
 ```
 
@@ -35,13 +35,14 @@ Open http://localhost:3000. The seeded admin is **`admin@taskforge.app`** / **`T
 - better-auth email/password handles `/api/auth/*`; sessions are cookies.
 - **Every** data route (`/api/projects`, `/api/tasks`, `/api/users`, `/api/stats`, `/api/realtime`, `/api/workspaces`) requires a session and a workspace membership — enforced in `lib/authz.ts` (`requireWorkspace`).
 - All queries are scoped to the caller's workspace. Workspace selection comes from the `x-workspace-id` header (or `?workspaceId=` for EventSource); the server ignores IDs for workspaces the user is not a member of.
-- Errors are mapped centrally in `lib/api-error.ts`: Zod/JSON → 400, FK → 400, duplicate → 409, missing → 404, unknown → 500. Rate limiting lives in `lib/ratelimit.ts` (auth POST, workspace creation, plus all other `/api/*` routes via `middleware.ts`).
+- Errors are mapped centrally in `lib/api-error.ts`: Zod/JSON → 400, FK → 400, duplicate → 409, missing → 404, unknown → 500. Rate limiting lives in `lib/ratelimit.ts` (coarse in-memory Edge middleware for all `/api/*` routes) and `lib/ratelimit-shared.ts` (database-backed counters for auth POSTs and workspace creation, shared across processes).
+- `npm run db:seed` is destructive and refuses to run against a production database unless invoked with `--force`.
 - List endpoints (`/api/tasks`, `/api/projects`, `/api/users`) accept `?limit=` (1–500, default 500) and `?offset=`; `X-Total-Count` reports the unpaginated total. Invalid values return 400.
 
 ## Architecture
 
 - `app/api/*` — route handlers; `lib/` — auth, authz, errors, Prisma, events, API client, store, color tokens.
-- `app/client-shell.tsx` mounts the shared dialogs, command palette, and SSE listener; views (`dashboard`, `projects`, `board`, `team`) read from TanStack Query.
+- `app/client-shell.tsx` mounts the shared dialogs, command palette, and SSE listener; views (`dashboard`, `projects`, `board`, `team`, `roadmap`) read from TanStack Query.
 - `lib/events.ts` is an in-process, workspace-scoped pub/sub. Mutations publish events; `/api/realtime` streams them via SSE; the client invalidates affected queries. A multi-instance deployment should replace `publish` with a shared pub/sub (Redis, etc.).
 
 ## Environment

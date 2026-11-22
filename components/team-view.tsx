@@ -48,6 +48,7 @@ export function TeamView() {
 
   const q = searchQuery.trim().toLowerCase();
   const visible = (users || []).filter((u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  const workloadCap = Math.max(20, ...visible.map((u) => u.taskCount ?? 0));
 
   if (isLoading) {
     return (
@@ -125,7 +126,7 @@ export function TeamView() {
                         <span className='text-muted-foreground'>Task Load</span>
                         <span className='font-medium tabular-nums text-xs'>{user.taskCount} tasks</span>
                       </div>
-                      <ProgressBar value={user.taskCount} max={20} color={user.color as ColorName} size='sm' />
+                      <ProgressBar value={user.taskCount} max={workloadCap} color={user.color as ColorName} size='sm' />
                     </div>
                     <div className='flex flex-wrap gap-1.5'>
                       {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map(priority => {

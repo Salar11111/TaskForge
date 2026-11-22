@@ -12,6 +12,7 @@ import { formatRelativeDate } from '@/lib/dates';
 import { getColorTokens, getStatusColor, getPriorityColor } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, Clock, AlertCircle, ListTodo } from 'lucide-react';
+import { useAppStore } from '@/lib/store';
 
 /**
  * Trend of `current` vs `previous`, as a percentage. Returns null when there is
@@ -25,6 +26,7 @@ function trendPercent(current: number, previous: number, improvement: boolean): 
 }
 
 export function Dashboard() {
+  const searchQuery = useAppStore((s) => s.searchQuery);
   const { data: stats, isLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: statsApi.get,
@@ -49,6 +51,12 @@ export function Dashboard() {
   }
 
   if (!stats) return null;
+
+  const q = searchQuery.trim().toLowerCase();
+  const visibleProjects = (stats.projectProgress || []).filter((p) => !q || p.name.toLowerCase().includes(q));
+  const visibleDeadlines = (stats.upcomingDeadlines || []).filter(
+    (t) => !q || t.title.toLowerCase().includes(q) || t.projectName.toLowerCase().includes(q)
+  );
 
   const statusData = [
     { name: 'To Do', value: stats.statusBreakdown?.TODO || 0, color: getColorTokens('slate').css },
@@ -97,7 +105,7 @@ export function Dashboard() {
             <CardTitle>Project Progress</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(stats.projectProgress || []).length > 0 ? stats.projectProgress.map((project) => (
+            {visibleProjects.length > 0 ? visibleProjects.map((project) => (
               <div key={project.id} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium truncate pr-2">{project.name}</span>
@@ -106,7 +114,7 @@ export function Dashboard() {
                 <ProgressBar value={project.completed} max={project.total || 1} color={project.color} size="sm" />
               </div>
             )) : (
-              <p className="text-sm text-muted-foreground text-center py-6">No projects yet</p>
+              <p className="text-sm text-muted-foreground text-center py-6">{q ? 'No matching projects' : 'No projects yet'}</p>
             )}
           </CardContent>
         </Card>
@@ -117,9 +125,9 @@ export function Dashboard() {
           <CardTitle>Upcoming Deadlines</CardTitle>
         </CardHeader>
         <CardContent>
-          {stats.upcomingDeadlines?.length > 0 ? (
+          {visibleDeadlines.length > 0 ? (
             <div className="space-y-2">
-              {stats.upcomingDeadlines.map((task) => (
+              {visibleDeadlines.map((task) => (
                 <div key={task.id} className={cn('flex items-center justify-between gap-4 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm', task.overdue && 'border-rose-500/30 bg-rose-500/5')}>
                   <div className="flex min-w-0 items-center gap-3">
                     <span className={cn('h-2 w-2 shrink-0 rounded-full', getColorTokens(getPriorityColor(task.priority)).dot)} />
@@ -143,7 +151,7 @@ export function Dashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-sm text-muted-foreground py-8">No upcoming deadlines</p>
+            <p className="text-center text-sm text-muted-foreground py-8">{q ? 'No matching deadlines' : 'No upcoming deadlines'}</p>
           )}
         </CardContent>
       </Card>

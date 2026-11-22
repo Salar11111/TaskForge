@@ -43,10 +43,7 @@ export async function GET(request: NextRequest) {
       prisma.task.findMany({
         where: {
           ...where,
-          dueDate: {
-            gte: today,
-            lte: addDays(today, 7),
-          },
+          dueDate: { lte: addDays(today, 7) },
           status: { not: 'DONE' },
         },
         include: {

@@ -78,24 +78,27 @@ export async function POST(request: NextRequest) {
       if (!sprint) throw new WorkspaceError(400, 'Unknown sprint');
     }
 
-    const maxOrder = await prisma.task.aggregate({
-      where: { projectId: validated.projectId, status: validated.status },
-      _max: { order: true },
-    });
-
-    const task = await prisma.task.create({
-      data: {
-        ...taskData,
-        dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
-        order: (maxOrder._max.order ?? -1) + 1,
-        labels: { create: labelIds.map((labelId) => ({ labelId })) },
-      },
-      include: {
-        assignee: { select: { id: true, name: true, image: true, color: true } },
-        project: { select: { id: true, name: true, color: true } },
-        labels: { select: { label: { select: { id: true, name: true, color: true } } } },
-        sprint: { select: { id: true, name: true } },
-      },
+    // Compute the next order and insert atomically so concurrent creates in the
+    // same column cannot produce duplicate `order` values.
+    const task = await prisma.$transaction(async (tx) => {
+      const maxOrder = await tx.task.aggregate({
+        where: { projectId: validated.projectId, status: validated.status },
+        _max: { order: true },
+      });
+      return tx.task.create({
+        data: {
+          ...taskData,
+          dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
+          order: (maxOrder._max.order ?? -1) + 1,
+          labels: { create: labelIds.map((labelId) => ({ labelId })) },
+        },
+        include: {
+          assignee: { select: { id: true, name: true, image: true, color: true } },
+          project: { select: { id: true, name: true, color: true } },
+          labels: { select: { label: { select: { id: true, name: true, color: true } } } },
+          sprint: { select: { id: true, name: true } },
+        },
+      });
     });
 
     await notifyAssignee(validated.assigneeId, ctx.session.user.id, task.id, task.title, ctx.workspace.id);

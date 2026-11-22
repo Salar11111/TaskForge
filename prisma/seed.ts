@@ -4,6 +4,11 @@ import { hashPassword } from 'better-auth/crypto';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Seeding is destructive. Require an explicit opt-in in production.
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+    throw new Error('Refusing to seed a production database without --force');
+  }
+
   await prisma.task.deleteMany();
   await prisma.project.deleteMany();
   await prisma.user.deleteMany();
@@ -105,7 +110,7 @@ async function main() {
     { title: 'Implement responsive navigation', description: 'Mobile-first nav with hamburger menu', status: 'DONE', priority: 'MEDIUM', order: 1, projectId: projects[0].id, assigneeId: members[1].id, dueDate: addDays(-1) },
     { title: 'Set up Tailwind 4 configuration', description: 'Configure design tokens and color palette', status: 'IN_PROGRESS', priority: 'HIGH', order: 0, projectId: projects[0].id, assigneeId: members[2].id, dueDate: addDays(1) },
     { title: 'Create component library', description: 'Build reusable UI components with shadcn/ui', status: 'IN_PROGRESS', priority: 'MEDIUM', order: 1, projectId: projects[0].id, assigneeId: members[3].id, dueDate: addDays(3) },
-    { title: 'Write documentation', description: 'Document component APIs and usage examples', status: 'TODO', priority: 'LOW', order: 2, projectId: projects[0].id, assigneeId: members[4].id, dueDate: addDays(7) },
+    { title: 'Write documentation', description: 'Document component APIs and usage examples', status: 'TODO', priority: 'LOW', order: 2, projectId: projects[0].id, assigneeId: members[4].id, dueDate: addDays(-2) },
     { title: 'Design onboarding flow', description: 'User onboarding screens and interactions', status: 'REVIEW', priority: 'HIGH', order: 0, projectId: projects[1].id, assigneeId: members[1].id, dueDate: addDays(2) },
     { title: 'Implement push notifications', description: 'Local and remote push notification system', status: 'IN_PROGRESS', priority: 'HIGH', order: 1, projectId: projects[1].id, assigneeId: members[0].id, dueDate: addDays(4) },
     { title: 'Build offline sync', description: 'Local-first data sync with conflict resolution', status: 'TODO', priority: 'URGENT', order: 2, projectId: projects[1].id, assigneeId: members[2].id, dueDate: addDays(10) },
@@ -122,9 +127,67 @@ async function main() {
     { title: 'Performance audit', description: 'Lighthouse audit and optimization', status: 'TODO', priority: 'LOW', order: 5, projectId: projects[3].id, assigneeId: members[3].id, dueDate: addDays(15) },
   ];
 
+  const createdTasks = [];
   for (const task of tasks) {
-    await prisma.task.create({ data: task });
+    createdTasks.push(await prisma.task.create({ data: task }));
   }
+
+  // --- P5 sample data so task details, labels, sprints and trash are populated ---
+  const [designLabel, bugLabel] = await Promise.all([
+    prisma.label.create({ data: { name: 'Design', color: 'violet', workspaceId: workspace.id } }),
+    prisma.label.create({ data: { name: 'Bug', color: 'rose', workspaceId: workspace.id } }),
+  ]);
+
+  const sprint = await prisma.sprint.create({
+    data: {
+      name: 'Sprint 1',
+      goal: 'Ship the first incremental release',
+      workspaceId: workspace.id,
+      startDate: addDays(-7),
+      endDate: addDays(7),
+    },
+  });
+
+  const firstTask = createdTasks[0];
+  await prisma.taskLabel.createMany({
+    data: [
+      { taskId: firstTask.id, labelId: designLabel.id },
+      { taskId: createdTasks[1].id, labelId: bugLabel.id },
+    ],
+  });
+  await prisma.task.update({
+    where: { id: createdTasks[1].id },
+    data: { sprintId: sprint.id },
+  });
+
+  await prisma.comment.create({
+    data: { body: 'Looks good — ready for review.', taskId: firstTask.id, authorId: adminUser.id },
+  });
+  await prisma.activityLog.create({
+    data: { action: 'updated task', meta: 'status', taskId: firstTask.id, actorId: adminUser.id },
+  });
+  await prisma.attachment.create({
+    data: {
+      name: 'Design brief',
+      url: 'https://example.com/design-brief.pdf',
+      taskId: firstTask.id,
+      uploaderId: adminUser.id,
+    },
+  });
+  await prisma.notification.create({
+    data: { userId: adminUser.id, type: 'info', message: 'Welcome to TaskForge' },
+  });
+  await prisma.task.create({
+    data: {
+      title: 'Archived draft',
+      description: 'Soft-deleted example for the trash view',
+      status: 'TODO',
+      priority: 'LOW',
+      order: 99,
+      projectId: projects[0].id,
+      deletedAt: addDays(-1),
+    },
+  });
 
   console.log(`Database seeded successfully! Admin: ${adminEmail}`);
 }

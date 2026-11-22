@@ -1,5 +1,5 @@
 ﻿import { ColorName } from './colors';
-import { ProjectInput, TaskInput, UserInput, LabelInput } from './validations';
+import { ProjectInput, TaskInput, UserInput } from './validations';
 import { useAppStore } from './store';
 
 export type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
@@ -204,8 +204,6 @@ export const sprintApi = {
   list: () => request<Sprint[]>('/sprints'),
   create: (data: { name: string; goal?: string | null; startDate: string; endDate: string }) =>
     request<Sprint>('/sprints', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<{ name: string; goal: string | null }>) =>
-    request<Sprint>(`/sprints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => request<void>(`/sprints/${id}`, { method: 'DELETE' }),
 };
 
@@ -213,14 +211,10 @@ export const notificationApi = {
   list: () => request<Notification[]>('/notifications'),
   markRead: (id: string) => request<void>(`/notifications/${id}`, { method: 'PATCH', body: JSON.stringify({ read: true }) }),
   markAllRead: () => request<void>('/notifications/read-all', { method: 'POST' }),
-  delete: (id: string) => request<void>(`/notifications/${id}`, { method: 'DELETE' }),
 };
 
 export const labelApi = {
   list: () => request<Label[]>('/labels'),
-  create: (data: LabelInput) => request<Label>('/labels', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<LabelInput>) => request<Label>(`/labels/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  delete: (id: string) => request<void>(`/labels/${id}`, { method: 'DELETE' }),
 };
 
 export const attachmentApi = {

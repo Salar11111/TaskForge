@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { MemberAvatar } from '@/components/member-avatar';
 import { type User } from '@/lib/api';
 import { LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function SettingsForm({ user }: { user: User }) {
   const [signingOut, setSigningOut] = useState(false);
@@ -19,6 +20,7 @@ export function SettingsForm({ user }: { user: User }) {
       router.push('/login');
     } catch {
       setSigningOut(false);
+      toast.error('Could not sign out. Please try again.');
     }
   };
 

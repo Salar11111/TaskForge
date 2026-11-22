@@ -12,9 +12,11 @@ import { ProgressBar } from '@/components/progress-bar';
 import { getColorTokens, getStatusColor } from '@/lib/colors';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
+import { useAppStore } from '@/lib/store';
 
 export function RoadmapView() {
   const queryClient = useQueryClient();
+  const searchQuery = useAppStore((s) => s.searchQuery);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
@@ -51,7 +53,13 @@ export function RoadmapView() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const unscheduled = (tasks ?? []).filter((t) => !t.sprintId);
+  const q = searchQuery.trim().toLowerCase();
+  const visibleSprints = (sprints ?? []).filter(
+    (s) => !q || s.name.toLowerCase().includes(q) || s.goal?.toLowerCase().includes(q)
+  );
+  const unscheduled = (tasks ?? []).filter(
+    (t) => !t.sprintId && (!q || t.title.toLowerCase().includes(q))
+  );
 
   return (
     <div className='space-y-6'>
@@ -75,13 +83,15 @@ export function RoadmapView() {
         </Card>
       )}
 
-      {(sprints ?? []).length === 0 && !creating && (
-        <p className='text-sm text-muted-foreground'>No sprints yet. Create one to plan a delivery window.</p>
+      {visibleSprints.length === 0 && !creating && (
+        <p className='text-sm text-muted-foreground'>{q ? 'No matching sprints' : 'No sprints yet. Create one to plan a delivery window.'}</p>
       )}
 
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        {(sprints ?? []).map((sprint) => {
-          const sprintTasks = (tasks ?? []).filter((t) => t.sprintId === sprint.id);
+        {visibleSprints.map((sprint) => {
+          const sprintTasks = (tasks ?? []).filter(
+            (t) => t.sprintId === sprint.id && (!q || t.title.toLowerCase().includes(q))
+          );
           const pct = sprint.taskCount ? Math.round((sprint.completed / sprint.taskCount) * 100) : 0;
           return (
             <Card key={sprint.id}>

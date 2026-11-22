@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession, getWorkspaceContext, WorkspaceError } from '@/lib/authz';
 import { apiErrorResponse } from '@/lib/api-error';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimitShared } from '@/lib/ratelimit-shared';
 import { z } from 'zod';
 
 const workspaceSchema = z.object({
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   try {
     const ctx = await getWorkspaceContext(request);
     if (!ctx) throw new WorkspaceError(401, 'Unauthorized');
-    if (!rateLimit(`ws-create:${ctx.session.user.id}`, WORKSPACE_RATE_LIMIT.limit, WORKSPACE_RATE_LIMIT.windowMs)) {
+    if (!await rateLimitShared(`ws-create:${ctx.session.user.id}`, WORKSPACE_RATE_LIMIT.limit, WORKSPACE_RATE_LIMIT.windowMs)) {
       return NextResponse.json({ message: 'Too many requests. Try again in a minute.' }, { status: 429 });
     }
     if (ctx.workspace) throw new WorkspaceError(400, 'You already belong to a workspace');
