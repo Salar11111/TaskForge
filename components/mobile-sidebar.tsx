@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, X, Menu, Sparkles, Milestone } from 'lucide-react';
+import { LayoutDashboard, Kanban, FolderKanban, Users, Settings, Menu, Sparkles, Milestone } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -36,11 +36,6 @@ export function MobileSidebar() {
             </span>
             TaskForge
           </SheetTitle>
-          <SheetClose asChild>
-            <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-              <X className="h-5 w-5" />
-            </button>
-          </SheetClose>
         </SheetHeader>
 
         <WorkspaceSwitcher />

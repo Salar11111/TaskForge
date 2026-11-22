@@ -48,7 +48,7 @@ export function DonutChart({ data, total, unit = 'tasks', className }: DonutChar
   }
 
   return (
-    <div className={cn('flex items-center gap-4', className)}>
+    <div className={cn('flex flex-wrap items-center justify-center gap-4', className)}>
       <div className='relative h-[180px] w-[180px] shrink-0' aria-hidden='true' tabIndex={-1}>
         <ResponsiveContainer width='100%' height='100%'>
           <PieChart>
@@ -87,7 +87,7 @@ export function DonutChart({ data, total, unit = 'tasks', className }: DonutChar
         </div>
       </div>
 
-      <div className='flex flex-col gap-2 text-sm min-w-0'>
+      <div className='flex flex-1 basis-32 flex-col gap-2 text-sm min-w-0'>
         {filteredData.map((entry) => (
           <div key={entry.name} className='flex items-center gap-2 min-w-0'>
             <span className='w-2.5 h-2.5 rounded-full shrink-0' style={{ backgroundColor: entry.color }} />

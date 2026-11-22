@@ -94,9 +94,9 @@ export function RoadmapView() {
           );
           const pct = sprint.taskCount ? Math.round((sprint.completed / sprint.taskCount) * 100) : 0;
           return (
-            <Card key={sprint.id}>
+            <Card key={sprint.id} className='min-w-0'>
               <CardHeader className='flex flex-row items-start justify-between gap-2'>
-                <div>
+                <div className='min-w-0'>
                   <CardTitle>{sprint.name}</CardTitle>
                   <p className='text-xs text-muted-foreground'>
                     {new Date(sprint.startDate).toLocaleDateString()} – {new Date(sprint.endDate).toLocaleDateString()}
