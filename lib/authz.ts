@@ -61,6 +61,17 @@ export async function requireWorkspace(request: Request): Promise<WorkspaceConte
   return ctx as WorkspaceContext;
 }
 
+/** Resolve a task that belongs to the caller's workspace, or throw 404. */
+export async function getWorkspaceTask(request: Request, taskId: string) {
+  const ctx = await requireWorkspace(request);
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, project: { workspaceId: ctx.workspace.id } },
+    select: { id: true, title: true, status: true, assigneeId: true, projectId: true },
+  });
+  if (!task) throw new WorkspaceError(404, 'Task not found');
+  return { ctx, task };
+}
+
 export async function requireSession(headers: Headers) {
   const session = await getSession(headers);
   if (!session) throw new WorkspaceError(401, 'Unauthorized');

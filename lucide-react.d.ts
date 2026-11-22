@@ -24,6 +24,7 @@ declare module 'lucide-react' {
   export const Circle: LucideIcon;
   export const Clock: LucideIcon;
   export const Edit: LucideIcon;
+  export const ExternalLink: LucideIcon;
   export const Folder: LucideIcon;
   export const FolderKanban: LucideIcon;
   export const Kanban: LucideIcon;
@@ -33,8 +34,10 @@ declare module 'lucide-react' {
   export const Menu: LucideIcon;
   export const Moon: LucideIcon;
   export const MoreHorizontal: LucideIcon;
+  export const Paperclip: LucideIcon;
   export const Plus: LucideIcon;
   export const Search: LucideIcon;
+  export const Send: LucideIcon;
   export const Settings: LucideIcon;
   export const Sparkles: LucideIcon;
   export const Sun: LucideIcon;

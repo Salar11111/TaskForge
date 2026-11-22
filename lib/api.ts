@@ -21,6 +21,30 @@ export interface Workspace {
   slug: string;
 }
 
+export interface Comment {
+  id: string;
+  body: string;
+  taskId: string;
+  createdAt: string;
+  author: { id: string; name: string; image: string | null; color: string };
+}
+
+export interface Activity {
+  id: string;
+  action: string;
+  meta: string | null;
+  createdAt: string;
+  actor: { id: string; name: string; image: string | null; color: string } | null;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  size: number | null;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -130,4 +154,20 @@ export const statsApi = {
 
 export const workspaceApi = {
   list: () => request<Workspace[]>('/workspaces'),
+};
+
+export const commentApi = {
+  list: (taskId: string) => request<Comment[]>(`/tasks/${taskId}/comments`),
+  create: (taskId: string, body: string) => request<Comment>(`/tasks/${taskId}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
+};
+
+export const activityApi = {
+  list: (taskId: string) => request<Activity[]>(`/tasks/${taskId}/activity`),
+};
+
+export const attachmentApi = {
+  list: (taskId: string) => request<Attachment[]>(`/tasks/${taskId}/attachments`),
+  create: (taskId: string, data: { name: string; url: string; size?: number }) =>
+    request<Attachment>(`/tasks/${taskId}/attachments`, { method: 'POST', body: JSON.stringify(data) }),
+  delete: (taskId: string, attachmentId: string) => request<void>(`/tasks/${taskId}/attachments/${attachmentId}`, { method: 'DELETE' }),
 };

@@ -76,6 +76,9 @@ export async function PATCH(
       throw new WorkspaceError(404, 'Task not found');
     }
 
+    await prisma.activityLog.create({
+      data: { action: 'updated task', meta: Object.keys(validated).join(', '), taskId: id, actorId: ctx.session.user.id },
+    });
     publish('task.updated', ctx.workspace.id);
     return NextResponse.json(task);
   } catch (error) {

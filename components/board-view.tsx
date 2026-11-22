@@ -42,10 +42,11 @@ interface TaskCardProps {
   task: Task;
   onEdit: () => void;
   onDelete: () => void;
+  onOpenDetail: () => void;
   overlay?: boolean;
 }
 
-function TaskCardContent({ task, onEdit, onDelete, overlay }: TaskCardProps) {
+function TaskCardContent({ task, onEdit, onDelete, onOpenDetail, overlay }: TaskCardProps) {
   const priorityTokens = getColorTokens(getPriorityColor(task.priority));
 
   return (
@@ -54,7 +55,13 @@ function TaskCardContent({ task, onEdit, onDelete, overlay }: TaskCardProps) {
       overlay ? 'rotate-2 opacity-90 shadow-lg ring-2 ring-emerald-500/40' : 'hover:shadow-md hover:-translate-y-0.5'
     )}>
       <div className='flex items-start justify-between gap-2 mb-1.5'>
-        <h4 className='font-medium text-sm leading-snug line-clamp-2 flex-1'>{task.title}</h4>
+        <h4
+          className='font-medium text-sm leading-snug line-clamp-2 flex-1 cursor-pointer hover:underline'
+          onClick={onOpenDetail}
+          title='Open task details'
+        >
+          {task.title}
+        </h4>
         {!overlay && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -88,7 +95,7 @@ function TaskCardContent({ task, onEdit, onDelete, overlay }: TaskCardProps) {
   );
 }
 
-function SortableTaskCard({ task, onEdit, onDelete }: Omit<TaskCardProps, 'overlay'>) {
+function SortableTaskCard({ task, onEdit, onDelete, onOpenDetail }: Omit<TaskCardProps, 'overlay'>) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -97,17 +104,18 @@ function SortableTaskCard({ task, onEdit, onDelete }: Omit<TaskCardProps, 'overl
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={cn(isDragging && 'opacity-40 ring-2 ring-emerald-500/40 shadow-lg rounded-lg')}>
-      <TaskCardContent task={task} onEdit={onEdit} onDelete={onDelete} />
+      <TaskCardContent task={task} onEdit={onEdit} onDelete={onDelete} onOpenDetail={onOpenDetail} />
     </div>
   );
 }
 
-function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, isOver }: {
+function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, onOpenDetail, isOver }: {
   status: Status;
   tasks: Task[];
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
+  onOpenDetail: (task: Task) => void;
   isOver: boolean;
 }) {
   const statusColor = getStatusColor(status);
@@ -145,6 +153,7 @@ function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, isOver }: 
                 task={task}
                 onEdit={() => onEditTask(task)}
                 onDelete={() => onDeleteTask(task)}
+                onOpenDetail={() => onOpenDetail(task)}
               />
             ))
           )}
@@ -156,7 +165,7 @@ function Column({ status, tasks, onAddTask, onEditTask, onDeleteTask, isOver }: 
 
 export function BoardView() {
   const queryClient = useQueryClient();
-  const { selectedProjectId, setSelectedProjectId, setTaskDialogOpen, searchQuery } = useAppStore();
+  const { selectedProjectId, setSelectedProjectId, setTaskDialogOpen, setDetailTaskId, searchQuery } = useAppStore();
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<Status | null>(null);
@@ -382,11 +391,12 @@ export function BoardView() {
               onAddTask={() => setTaskDialogOpen(true, null, status)}
               onEditTask={(task) => setTaskDialogOpen(true, task.id)}
               onDeleteTask={setDeletingTask}
+              onOpenDetail={(task) => setDetailTaskId(task.id)}
             />
           ))}
         </div>
         <DragOverlay>
-          {activeTask ? <TaskCardContent task={activeTask} onEdit={() => {}} onDelete={() => {}} overlay /> : null}
+          {activeTask ? <TaskCardContent task={activeTask} onEdit={() => {}} onDelete={() => {}} onOpenDetail={() => {}} overlay /> : null}
         </DragOverlay>
       </DndContext>
 

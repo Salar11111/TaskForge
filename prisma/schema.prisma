@@ -34,6 +34,10 @@ model Task {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  comments    Comment[]
+  activity    ActivityLog[]
+  attachments Attachment[]
+
   @@index([projectId, status, order])
   @@index([assigneeId])
 }
@@ -52,6 +56,49 @@ model User {
   accounts      Account[]
   memberships   WorkspaceMember[]
   tasks         Task[]    @relation("TaskAssignees")
+  comments      Comment[]
+  activity      ActivityLog[]
+  attachments   Attachment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId, createdAt])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  meta      String?
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  size       Int?
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploaderId String?
+  uploader   User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
 }
 
 model Session {

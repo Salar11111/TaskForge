@@ -17,4 +17,7 @@
   stats: {
     all: ['stats'] as const,
   },
+  comments: (taskId: string) => ['comments', taskId] as const,
+  activity: (taskId: string) => ['activity', taskId] as const,
+  attachments: (taskId: string) => ['attachments', taskId] as const,
 };
